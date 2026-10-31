@@ -1,0 +1,160 @@
+{
+  "agente": "demo-valdoria",
+  "nome_agente": "Biblioteca di Valdoria",
+  "costante_istruzioni": "VALDORIA_INSTRUCTIONS",
+  "origine": "Domande scritte per stAPPly sul modello della griglia del docente: stessi tipi e stesse trappole (una tabella del PDF che perde i numeri, una regola con un'eccezione, un titolo diviso tra più righe, un valore vuoto che in SQLite è NULL). Le risposte vere vengono dai file di backend/seed/valdoria: i passaggi sono quelli dei chunk indicizzati, i numeri da una SELECT scritta a mano sulle tabelle importate dal backend.",
+  "domande": [
+    {
+      "n": 1,
+      "tipo": "documenti",
+      "domanda": "Quanti documenti posso avere in prestito contemporaneamente con la tessera studenti?",
+      "risposta_vera": "8.",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "faq.pdf",
+          "chunk": "faq-001",
+          "passaggio": "la tessera studenti, per studenti di scuola superiore e universitari fino a 26 anni, ne consente 8"
+        }
+      ],
+      "nota": "Nel Regolamento dei prestiti (art. 5) il numero sta in una tabella del PDF che, estratta, perde i valori di ordinaria e studenti: nel chunk regolamento-prestiti-009 resta solo «Ordinaria Studenti Famiglia 10». La risposta sta nelle FAQ."
+    },
+    {
+      "n": 2,
+      "tipo": "documenti",
+      "domanda": "Posso restituire nel contenitore esterno della sede Centrale un libro arrivato con il prestito interbibliotecario?",
+      "risposta_vera": "No: i documenti del prestito interbibliotecario si restituiscono solo al banco della sede dove sono stati ritirati, non nel contenitore esterno.",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "guida-prestito-interbibliotecario.docx",
+          "chunk": "guida-prestito-interbibliotecario-017",
+          "passaggio": "I documenti del prestito interbibliotecario si restituiscono al banco della sede dove sono stati ritirati, e non nel contenitore esterno della sede Centrale."
+        },
+        {
+          "file": "regolamento-prestiti.pdf",
+          "chunk": "regolamento-prestiti-014",
+          "passaggio": "I documenti del prestito interbibliotecario si restituiscono solo al banco."
+        }
+      ],
+      "nota": "Lo stesso chunk del regolamento dice che il contenitore esterno è accessibile 24 ore su 24: chi si ferma lì risponde sì."
+    },
+    {
+      "n": 3,
+      "tipo": "documenti",
+      "domanda": "Si può prenotare un posto in sala studio per la sera?",
+      "risposta_vera": "Sì, ma solo nella sala della sede Centrale e solo nel periodo esami (7 gennaio-28 febbraio, 3 giugno-31 luglio, 25 agosto-30 settembre): fascia serale 19:30-23:00, con ingresso fino alle 22:00.",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "regolamento-sala-studio.md",
+          "chunk": "regolamento-sala-studio-007",
+          "passaggio": "| Sera | 19:30–23:00 | solo nel periodo esami, sala Centrale |"
+        },
+        {
+          "file": "regolamento-sala-studio.md",
+          "chunk": "regolamento-sala-studio-009",
+          "passaggio": "Il periodo esami va dal 7 gennaio al 28 febbraio, dal 3 giugno al 31 luglio e dal 25 agosto al 30 settembre. Nel periodo esami l'ingresso serale nella sala Centrale è consentito fino alle 22:00 e solo con la prenotazione della fascia serale."
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "tipo": "dati",
+      "domanda": "Quante copie di «Il deserto dei Tartari» ha la biblioteca?",
+      "risposta_vera": "8 copie in tutto: 4 a San Rocco, 3 a Borgo Nuovo e 1 alla Centrale.",
+      "strada_attesa": "dati",
+      "fonti": [
+        {
+          "sql": "SELECT sede, copie FROM catalogo WHERE titolo = 'Il deserto dei Tartari' ORDER BY copie DESC",
+          "risultato": [["San Rocco", 4], ["Borgo Nuovo", 3], ["Centrale", 1]]
+        },
+        {
+          "sql": "SELECT SUM(copie) AS copie FROM catalogo WHERE titolo = 'Il deserto dei Tartari'",
+          "risultato": [[8]]
+        }
+      ],
+      "nota": "Il catalogo ha una riga per titolo e per sede: chi legge una riga sola risponde 4, 3 o 1."
+    },
+    {
+      "n": 5,
+      "tipo": "dati",
+      "domanda": "Quanti prestiti non sono ancora stati restituiti?",
+      "risposta_vera": "43.",
+      "strada_attesa": "dati",
+      "fonti": [
+        {
+          "sql": "SELECT COUNT(*) AS non_restituiti FROM prestiti WHERE data_restituzione IS NULL",
+          "risultato": [[43]]
+        }
+      ],
+      "nota": "Nel CSV la data di restituzione è vuota e nel database diventa NULL: una query con data_restituzione = '' trova 0 righe."
+    },
+    {
+      "n": 6,
+      "tipo": "dati",
+      "domanda": "Quanti prestiti hanno fatto nel 2025 gli iscritti con la tessera studenti?",
+      "risposta_vera": "106.",
+      "strada_attesa": "dati",
+      "fonti": [
+        {
+          "sql": "SELECT COUNT(*) AS prestiti FROM prestiti p JOIN utenti u ON u.id = p.utente_id WHERE u.tessera = 'studenti' AND p.data_prestito BETWEEN '2025-01-01' AND '2025-12-31'",
+          "risultato": [[106]]
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "tipo": "documenti+dati",
+      "domanda": "Il prestito 620 si può rinnovare ancora?",
+      "risposta_vera": "No: è un libro («I fratelli Karamazov») già rinnovato 2 volte, e i libri si rinnovano al massimo due volte. È giusta anche una risposta che aggiunge la scadenza passata (18 ottobre 2026): un prestito già scaduto non si rinnova.",
+      "strada_attesa": "documenti+dati",
+      "fonti": [
+        {
+          "sql": "SELECT p.id, c.titolo, c.tipo, p.data_scadenza, p.data_restituzione, p.rinnovi FROM prestiti p JOIN catalogo c ON c.id = p.catalogo_id WHERE p.id = 620",
+          "risultato": [[620, "I fratelli Karamazov", "libro", "2026-10-18", null, 2]]
+        },
+        {
+          "file": "faq.pdf",
+          "chunk": "faq-003",
+          "passaggio": "I libri si possono rinnovare fino a due volte, ogni volta per altri 30 giorni."
+        },
+        {
+          "file": "faq.pdf",
+          "chunk": "faq-003",
+          "passaggio": "Un prestito già scaduto non si può rinnovare."
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "tipo": "senza risposta",
+      "domanda": "Nella sala studio ci sono armadietti per lasciare zaini e cappotti?",
+      "risposta_vera": "Non c'è: i documenti non parlano di armadietti e le tabelle riguardano solo catalogo, prestiti e iscritti. La risposta giusta dice che non l'ha trovato e dove ha cercato.",
+      "strada_attesa": "documenti",
+      "fonti": [],
+      "assenti": ["armadiett"],
+      "nota": "Il regolamento della sala studio parla di oggetti personali, pause e oggetti incustoditi, ma non di armadietti: sono esche per una risposta inventata."
+    },
+    {
+      "n": 9,
+      "tipo": "follow-up",
+      "segue": 1,
+      "domanda": "E con la tessera famiglia?",
+      "risposta_vera": "10, complessivi per tutto il nucleo familiare.",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "faq.pdf",
+          "chunk": "faq-002",
+          "passaggio": "ne consente 10 in tutto per il nucleo"
+        },
+        {
+          "file": "regolamento-prestiti.pdf",
+          "chunk": "regolamento-prestiti-009",
+          "passaggio": "Famiglia 10, complessivi per tutto il nucleo"
+        }
+      ]
+    }
+  ]
+}
