@@ -1,0 +1,16 @@
+{
+  "tables": [
+    {
+      "table": "note_spese",
+      "filename": "note_spese.csv",
+      "rows": 180,
+      "columns": [
+        {"name": "id", "type": "INTEGER"},
+        {"name": "dipendente_id", "type": "INTEGER"},
+        {"name": "importo", "type": "REAL"},
+        {"name": "stato", "type": "TEXT"}
+      ],
+      "uploaded_at": "2026-10-31T10:12:09Z"
+    }
+  ]
+}

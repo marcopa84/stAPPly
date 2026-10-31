@@ -1,0 +1,9 @@
+{
+  "answer": "Non sono riuscito a completare la risposta entro il numero massimo di passaggi. Prova a riformulare la domanda.",
+  "status": "max_turns",
+  "route": "dati",
+  "tools": [
+    {"name": "query_db", "arguments": {"sql": "SELECT COUNT(*) FROM note_spese WHERE stato = 'in attesa'"}}
+  ],
+  "sources": []
+}
