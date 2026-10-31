@@ -156,10 +156,13 @@ Nessun test usa la rete né una chiave OpenAI:
 La CI ([`.github/workflows/`](.github/workflows/)) ha un workflow per servizio, filtrato per
 percorso:
 
-- `backend.yml`: `uv sync --locked`, Ruff e pytest;
+- `backend.yml`: `uv sync --locked`, Ruff e pytest. Installa anche PHP e l'autoload del
+  frontend (`composer install --no-dev`), perché un test confronta le istruzioni lette da
+  `scripts/griglia.py` con quelle che vede PHP;
 - `frontend.yml`: Composer, `npm ci`, build, Pint, PHPStan (livello 7) e Pest.
 
-Tutti e due girano anche quando cambia il contratto. Dependabot propone ogni settimana gli
+Tutti e due girano anche quando cambia il contratto. Il backend gira anche quando cambiano
+`docs/griglia/` o `DemoSeeder.php`, che i suoi test leggono. Dependabot propone ogni settimana gli
 aggiornamenti di Composer, npm, uv e delle action.
 
 ## Decisioni
@@ -231,10 +234,11 @@ Come si verificano i criteri del corso, applicati a ogni agente:
 | 2 | Ricerca con il nome del file | Nella traccia c'è la chiamata a `cerca_documenti`; ogni chip citato mostra file e passaggio | `test_indicizza_ogni_formato_del_seed`: ogni file del seed ritrovato dalla ricerca, con il nome |
 | 3 | Citazione, fuori tema | La risposta ha i chip `[id]`; una domanda fuori tema ha strada `nessuna` e nessun tool | `test_domanda_sui_documenti_cita_un_chunk`, `test_domanda_fuori_tema_rifiutata_senza_tool` |
 | 4 | Dati verificabili | La stessa domanda nella Console SQL, con una `SELECT` scritta a mano; una domanda mista ha strada `documenti+dati` | `test_domanda_che_chiede_documenti_e_dati_chiama_tutti_e_due_i_tool`: il numero confrontato con una somma fatta a mano sul CSV |
-| 5 | Griglia di 8 domande | Ogni domanda lanciata almeno due volte, in chat nuove | Da fare con il modello reale |
+| 5 | Griglia di 8 domande | Ogni domanda lanciata almeno due volte, in chat nuove. Domande e risposte vere dei due agenti demo sono in [`docs/griglia/`](docs/griglia/README.md); da `backend/`, `uv run python -m scripts.griglia <tema>` fa gli stessi lanci senza interfaccia e scrive il file dei risultati da compilare | `test_griglia.py`: composizione delle 8 domande più il follow-up, ogni passaggio nel suo chunk, ogni `SELECT` con le righe attese, istruzioni lette da `DemoSeeder.php` |
 
-I test usano un modello finto. La griglia del criterio 5 e la prova con il modello vero
-richiedono una chiave OpenAI e non sono ancora state fatte.
+I test usano un modello finto. La griglia del criterio 5 è pronta, con le risposte vere
+ricontrollate dai test, e va lanciata con una chiave OpenAI: come si lancia, come si segna l'esito
+e come si prova una cura è in [`docs/griglia/README.md`](docs/griglia/README.md).
 
 ## Struttura
 
@@ -243,11 +247,12 @@ richiedono una chiave OpenAI e non sono ancora state fatte.
 ├── .github/              CI (un workflow per servizio) e Dependabot
 ├── docs/
 │   ├── api.md            il contratto tra frontend e backend
-│   └── contract/         esempi JSON usati dai test dei due lati
+│   ├── contract/         esempi JSON usati dai test dei due lati
+│   └── griglia/          la griglia di prova del criterio 5 sui due agenti demo
 ├── backend/              FastAPI + Agents SDK, vedi backend/README.md
 │   ├── app/api/          lo strato HTTP: valida e chiama il core
 │   ├── app/core/         ingestione, Chroma, tabelle, agente, chat; senza FastAPI
-│   ├── scripts/          seed_demo.py, i dati degli agenti demo
+│   ├── scripts/          seed_demo.py (dati degli agenti demo) e griglia.py (griglia di prova)
 │   ├── seed/             documenti e tabelle finti di Valtesa e Valdoria
 │   └── tests/
 └── frontend/             Laravel + Livewire + Flux, vedi frontend/README.md

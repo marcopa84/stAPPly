@@ -1,7 +1,9 @@
 name: backend
 
-# Gira solo quando cambia il backend o il contratto: i test del backend controllano
-# che ogni risposta abbia la forma degli esempi in docs/contract/.
+# Gira quando cambia il backend o un file fuori da backend/ che i suoi test leggono:
+# il contratto (le risposte devono avere la forma degli esempi in docs/contract/), la
+# griglia di prova in docs/griglia/ e le istruzioni demo in DemoSeeder.php, che
+# scripts/griglia.py usa come fonte unica.
 on:
   push:
     branches:
@@ -10,12 +12,16 @@ on:
       - 'backend/**'
       - 'docs/api.md'
       - 'docs/contract/**'
+      - 'docs/griglia/**'
+      - 'frontend/database/seeders/DemoSeeder.php'
       - '.github/workflows/backend.yml'
   pull_request:
     paths:
       - 'backend/**'
       - 'docs/api.md'
       - 'docs/contract/**'
+      - 'docs/griglia/**'
+      - 'frontend/database/seeders/DemoSeeder.php'
       - '.github/workflows/backend.yml'
 
 permissions:
@@ -55,6 +61,22 @@ jobs:
       - name: Format
         run: uv run ruff format --check
 
+      # PHP e l'autoload del frontend servono a test_il_parser_legge_le_costanti_come_php:
+      # confronta le istruzioni che scripts/griglia.py legge da DemoSeeder.php con quelle che
+      # vede PHP. Senza, il test viene saltato e la parità resta controllata solo in locale.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      # Basta la classe madre del seeder: niente pacchetti di sviluppo né script di Laravel.
+      - name: Install frontend autoload
+        working-directory: frontend
+        run: composer install --no-dev --no-scripts --no-interaction --no-progress --prefer-dist
+
       # Nessuna chiave OpenAI: embedding e modello sono finti e i socket sono bloccati.
+      # -rs elenca i test saltati con il motivo, così uno skip inatteso si vede nel log.
       - name: Tests
-        run: uv run pytest -q
+        run: uv run pytest -q -rs

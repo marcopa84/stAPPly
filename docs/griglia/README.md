@@ -10,7 +10,7 @@ cercata prima.
 |---|---|
 | [`valtesa.json`](valtesa.json) | le domande del docente sull'ufficio del personale (`demo-valtesa`), con le risposte vere ricontrollate sul seed |
 | [`valdoria.json`](valdoria.json) | otto domande equivalenti più il follow-up sulla biblioteca (`demo-valdoria`) |
-| `risultati-<tema>-<data>.md` | un giro della griglia, scritto da `backend/scripts/griglia.py` e compilato a mano |
+| `risultati-<tema>-<data>.md` | un giro della griglia, scritto da `backend/scripts/griglia.py` e compilato a mano; il primo nasce dal primo lancio con la chiave vera |
 
 ## Le domande e le risposte vere
 
@@ -28,7 +28,9 @@ tabella. Il follow-up ha `segue`, il numero della domanda nella cui sessione va 
 Le risposte vere non si fidano della memoria: `backend/tests/test_griglia.py` indicizza il seed
 come fa `seed_demo.py` e controlla che ogni passaggio sia nel suo chunk, che ogni SELECT dia
 proprio quelle righe sulle tabelle importate dal backend e che le parole `assenti` non compaiano
-da nessuna parte. Se cambiano i file del seed o il modo di indicizzarli, il test lo dice.
+da nessuna parte. Se cambiano i file del seed o il modo di indicizzarli, il test lo dice. La CI
+del backend parte anche quando cambiano questa cartella o `DemoSeeder.php`, quindi una cura alle
+istruzioni o una risposta vera corretta passano dagli stessi controlli.
 
 ## Lanciarla
 
@@ -41,8 +43,9 @@ uv run python -m scripts.griglia valtesa    # poi: uv run python -m scripts.grig
 
 Con `--lanci 3` ogni domanda si lancia tre volte, come nella griglia del docente (il default è
 2). Ogni giro costa almeno una chiamata al modello per domanda e per lancio (18 con due lanci),
-una in più dopo ogni chiamata dei tool, più gli embedding delle ricerche. Senza `OPENAI_API_KEY` lo script esce subito, senza lanciare niente; se gli
-agenti demo non hanno documenti o tabelle, chiede di lanciare prima `seed_demo`.
+una in più dopo ogni chiamata dei tool, più gli embedding delle ricerche. Senza
+`OPENAI_API_KEY` lo script esce subito, senza lanciare niente; se gli agenti demo non hanno
+documenti o tabelle, chiede di lanciare prima `seed_demo`.
 
 Lo script fa le domande con la stessa funzione del core che usa la chat (`chat.rispondi`) e con
 le istruzioni che Laravel passa al backend, lette da
