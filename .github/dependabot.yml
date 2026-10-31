@@ -1,0 +1,61 @@
+version: 2
+
+# Una voce per ecosistema. Minor e patch arrivano in un'unica PR per ecosistema,
+# le major una per volta; il cooldown lascia qualche giorno alle release appena uscite.
+updates:
+  - package-ecosystem: "composer"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    groups:
+      composer:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "uv"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    ignore:
+      # La versione del corso (vedi CLAUDE.md): si aggiorna a mano, insieme al codice
+      # che usa l'SDK, non con una PR automatica.
+      - dependency-name: "openai-agents"
+    groups:
+      uv:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
