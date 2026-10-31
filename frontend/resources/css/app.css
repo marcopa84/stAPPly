@@ -1,0 +1,251 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    /*
+     * Accento di stAPPly: verde petrolio, il colore della pinzatrice.
+     * Contrasto AA verificato: teal-700 su bianco 5.4:1 (4.9:1 su zinc-100),
+     * in scuro teal-400 su zinc-800 8.1:1 e zinc-900 sopra teal-400 9.6:1.
+     */
+    --color-accent: var(--color-teal-700);
+    --color-accent-content: var(--color-teal-700);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-teal-400);
+        --color-accent-content: var(--color-teal-400);
+        --color-accent-foreground: var(--color-zinc-900);
+    }
+}
+
+@layer base {
+
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply  !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+/* \[:where(&)\]:size-4 {
+    @apply size-4;
+} */
+
+/*
+ * Mascotte (<x-mascot>). Lo stato arriva da data-state sull'<svg>: qui ci sono colori,
+ * pose e animazioni. Sta in "components" perché le utility di dimensione passate con
+ * class (size-12, w-24...) devono vincere sulla larghezza predefinita.
+ */
+@layer components {
+    .mascot {
+        --mascot-shell: var(--color-accent);
+        --mascot-steel: var(--color-zinc-700);
+        --mascot-metal: var(--color-zinc-400);
+        --mascot-visor: var(--color-zinc-900);
+        --mascot-eye: var(--color-teal-200);
+        --mascot-paper: var(--color-white);
+        --mascot-paper-edge: var(--color-zinc-300);
+        --mascot-shadow: color-mix(in oklab, var(--color-zinc-900) 14%, transparent);
+
+        width: 8rem;
+        height: auto;
+        overflow: visible;
+    }
+
+    .dark .mascot {
+        --mascot-steel: var(--color-zinc-500);
+        --mascot-metal: var(--color-zinc-300);
+        --mascot-visor: var(--color-zinc-950);
+        --mascot-paper: var(--color-zinc-100);
+        --mascot-paper-edge: var(--color-zinc-400);
+        --mascot-shadow: color-mix(in oklab, var(--color-black) 45%, transparent);
+    }
+
+    .mascot-shell { fill: var(--mascot-shell); }
+    .mascot-steel { fill: var(--mascot-steel); }
+    .mascot-metal { fill: var(--mascot-metal); }
+    .mascot-visor { fill: var(--mascot-visor); }
+    .mascot-eye { fill: var(--mascot-eye); }
+    .mascot-shadow { fill: var(--mascot-shadow); }
+
+    .mascot-paper {
+        fill: var(--mascot-paper);
+        stroke: var(--mascot-paper-edge);
+        stroke-width: 0.75;
+    }
+
+    .mascot-sheen {
+        fill: none;
+        stroke: var(--color-white);
+        stroke-linecap: round;
+        stroke-opacity: 0.35;
+        stroke-width: 3;
+    }
+
+    .mascot-eye-line {
+        fill: none;
+        stroke: var(--mascot-eye);
+        stroke-linecap: round;
+        stroke-width: 2.6;
+    }
+
+    .mascot-staple {
+        display: none;
+        fill: none;
+        stroke: var(--mascot-metal);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2.6;
+        transform: rotate(-12deg);
+    }
+
+    /* Le rotazioni usano le coordinate del viewBox: la testa gira sul perno, il corpo sulla base. */
+    .mascot-head {
+        transform-box: view-box;
+        transform-origin: 24px 62px;
+    }
+
+    .mascot-body {
+        transform-box: view-box;
+        transform-origin: 58px 94px;
+    }
+
+    .mascot-staple,
+    .mascot-eyes {
+        transform-box: fill-box;
+        transform-origin: center;
+    }
+
+    .mascot-eyes { display: none; }
+
+    .mascot[data-state="idle"] [data-eyes="idle"],
+    .mascot[data-state="thinking"] [data-eyes="thinking"],
+    .mascot[data-state="happy"] [data-eyes="happy"],
+    .mascot[data-state="confused"] [data-eyes="confused"],
+    .mascot[data-state="happy"] .mascot-staple {
+        display: inline;
+    }
+
+    /* Pose ferme: sono anche quello che vede chi ha chiesto meno movimento. */
+    .mascot[data-state="thinking"] .mascot-head { transform: rotate(3deg); }
+    .mascot[data-state="confused"] .mascot-body { transform: rotate(-6deg); }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .mascot[data-state="idle"] [data-eyes="idle"] {
+            animation: mascot-blink 5s ease-in-out infinite;
+        }
+
+        .mascot[data-state="thinking"] .mascot-head {
+            animation: mascot-press 1.1s ease-in-out infinite;
+        }
+
+        .mascot[data-state="happy"] .mascot-head {
+            animation: mascot-press 0.5s ease-in-out;
+        }
+
+        .mascot[data-state="happy"] .mascot-staple {
+            animation: mascot-staple 0.7s 0.3s cubic-bezier(0.2, 0.8, 0.3, 1.2) backwards;
+        }
+
+        .mascot[data-state="confused"] .mascot-body {
+            animation: mascot-tilt 0.6s ease-out;
+        }
+    }
+}
+
+/* La testa scende fino a sfiorare i fogli, come quando pinza. */
+@keyframes mascot-press {
+    0%, 100% { transform: rotate(0deg); }
+    40%, 55% { transform: rotate(6deg); }
+}
+
+/* Il punto metallico esce dalla bocca e si ferma in alto, davanti al muso. */
+@keyframes mascot-staple {
+    from { opacity: 0; transform: translate(-16px, 38px) rotate(0deg) scale(0.5); }
+    60% { opacity: 1; transform: translate(2px, -6px) rotate(-20deg) scale(1.05); }
+    to { transform: rotate(-12deg); }
+}
+
+@keyframes mascot-tilt {
+    0% { transform: rotate(0deg); }
+    60% { transform: rotate(-9deg); }
+    100% { transform: rotate(-6deg); }
+}
+
+@keyframes mascot-blink {
+    0%, 94%, 100% { transform: scaleY(1); }
+    97% { transform: scaleY(0.15); }
+}
+
+/*
+ * Risposte dell'agente in chat (Message::answerHtml). Il markdown lo rende il server, senza
+ * classi di Tailwind: lo stile sta qui. I chip delle citazioni e il loro popover vengono da
+ * App\Markdown\CitationRenderer, in app/, che Tailwind non legge.
+ */
+@layer components {
+    .chat-answer {
+        @apply space-y-3 leading-relaxed break-words text-zinc-800 dark:text-zinc-100;
+    }
+
+    .chat-answer :where(ul) { @apply list-disc space-y-1 ps-5; }
+    .chat-answer :where(ol) { @apply list-decimal space-y-1 ps-5; }
+    .chat-answer :where(h1, h2, h3, h4, h5, h6) { @apply font-semibold text-zinc-900 dark:text-white; }
+    .chat-answer :where(a) { @apply text-accent-content underline underline-offset-2; }
+    .chat-answer :where(code) { @apply rounded bg-zinc-100 px-1 py-0.5 font-mono text-[0.85em] dark:bg-white/10; }
+    .chat-answer :where(pre) { @apply overflow-x-auto rounded-lg bg-zinc-900 p-3 text-zinc-100; }
+    .chat-answer :where(pre code) { @apply bg-transparent p-0; }
+    .chat-answer :where(table) { @apply w-full border-collapse text-sm; }
+    .chat-answer :where(th, td) { @apply border border-zinc-200 px-2 py-1 text-start dark:border-zinc-700; }
+    .chat-answer :where(blockquote) { @apply border-s-4 border-zinc-200 ps-3 text-zinc-600 dark:border-zinc-600 dark:text-zinc-300; }
+
+    .citation-chip {
+        @apply mx-0.5 inline-flex cursor-pointer items-center rounded-md border border-accent/30 bg-accent/10 px-1.5 align-baseline font-mono text-[0.75em] leading-5 text-accent-content transition hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent;
+    }
+
+    /* È un [popover]: solo i figli hanno display, così resta nascosto finché non si apre. */
+    .citation-popover {
+        @apply m-0 max-h-72 w-max max-w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-zinc-200 bg-white p-3 text-start text-sm text-zinc-700 shadow-lg dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100;
+    }
+
+    .citation-file { @apply mb-1 block font-mono text-xs font-medium text-zinc-500 dark:text-zinc-300; }
+    .citation-text { @apply block whitespace-pre-line; }
+}
