@@ -32,5 +32,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="STAPPLY_BACKEND_URL" value="http://backend.test"/>
+        <env name="STAPPLY_BACKEND_KEY" value="chiave-di-prova"/>
     </php>
 </phpunit>

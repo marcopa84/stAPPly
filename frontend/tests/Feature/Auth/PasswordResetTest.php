@@ -38,6 +38,36 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class);
     }
 
+    public function test_reset_link_request_does_not_reveal_whether_the_email_is_registered(): void
+    {
+        Notification::fake();
+
+        $this->from(route('password.request'))
+            ->post(route('password.email'), ['email' => 'nessuno@example.com'])
+            ->assertRedirect(route('password.request'))
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', __('passwords.sent'));
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_a_repeated_reset_link_request_answers_like_the_first_one(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+
+        $this->post(route('password.email'), ['email' => $user->email])
+            ->assertSessionHas('status', __('passwords.sent'));
+
+        // Il broker rifiuta la seconda richiesta (throttled) solo per gli utenti che esistono.
+        $this->post(route('password.email'), ['email' => $user->email])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', __('passwords.sent'));
+
+        Notification::assertSentToTimes($user, ResetPassword::class, 1);
+    }
+
     public function test_reset_password_screen_can_be_rendered(): void
     {
         Notification::fake();

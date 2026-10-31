@@ -1,9 +1,18 @@
+@php
+    // Dal pulsante "Accedi alla demo" della home: le credenziali sono pubbliche, si compilano già.
+    $demo = request()->boolean('demo');
+@endphp
+
 <x-layouts::auth :title="__('Log in')">
     <div class="flex flex-col gap-6">
         <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
+
+        @if ($demo)
+            <flux:callout variant="secondary" icon="information-circle" heading="Credenziali dell'utente demo già inserite: premi Accedi per aprire la tua copia della demo." />
+        @endif
 
         <x-passkey-verify />
 
@@ -14,7 +23,7 @@
             <flux:input
                 name="email"
                 :label="__('Email address')"
-                :value="old('email')"
+                :value="old('email', $demo ? config('stapply.demo.email') : null)"
                 type="email"
                 required
                 autofocus
@@ -27,6 +36,7 @@
                 <flux:input
                     name="password"
                     :label="__('Password')"
+                    :value="$demo ? config('stapply.demo.password') : null"
                     type="password"
                     required
                     autocomplete="current-password"

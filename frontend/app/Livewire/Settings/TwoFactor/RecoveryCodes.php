@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings\TwoFactor;
 
+use App\Support\DemoAccount;
 use Exception;
 use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
 use Livewire\Attributes\Locked;
@@ -26,6 +27,8 @@ class RecoveryCodes extends Component
      */
     public function regenerateRecoveryCodes(GenerateNewRecoveryCodes $generateNewRecoveryCodes): void
     {
+        DemoAccount::abortIfDemo(auth()->user());
+
         $generateNewRecoveryCodes(auth()->user());
 
         $this->loadRecoveryCodes();

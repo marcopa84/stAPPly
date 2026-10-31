@@ -3,8 +3,10 @@
 namespace App\Livewire\Settings;
 
 use App\Concerns\ProfileValidationRules;
+use App\Support\DemoAccount;
 use Flux\Flux;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
@@ -34,6 +36,9 @@ class Profile extends Component
     public function updateProfileInformation(): void
     {
         $user = Auth::user();
+
+        // Cambiare l'email dell'utente demo lascerebbe fuori tutti, come la password.
+        DemoAccount::abortIfDemo($user);
 
         $validated = $this->validate($this->profileRules($user->id));
 
@@ -80,5 +85,17 @@ class Profile extends Component
         $user = Auth::user();
 
         return ! $user instanceof MustVerifyEmail || $user->hasVerifiedEmail();
+    }
+
+    public function render(): View
+    {
+        if (DemoAccount::is(Auth::user())) {
+            return view('livewire.settings.demo-locked', [
+                'heading' => 'Profilo',
+                'subheading' => 'Nome ed email',
+            ]);
+        }
+
+        return view('livewire.settings.profile');
     }
 }

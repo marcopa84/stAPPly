@@ -3,8 +3,10 @@
 namespace App\Livewire\Settings;
 
 use App\Concerns\PasswordValidationRules;
+use App\Support\DemoAccount;
 use Exception;
 use Flux\Flux;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
@@ -69,11 +71,16 @@ class Security extends Component
     #[Locked]
     public string $deletingPasskeyName = '';
 
+    #[Locked]
+    public bool $isDemo = false;
+
     /**
      * Mount the component.
      */
     public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {
+        $this->isDemo = DemoAccount::is(Auth::user());
+
         $this->canManageTwoFactor = Features::canManageTwoFactorAuthentication();
 
         if ($this->canManageTwoFactor) {
@@ -97,6 +104,8 @@ class Security extends Component
      */
     public function updatePassword(): void
     {
+        DemoAccount::abortIfDemo(Auth::user());
+
         try {
             $validated = $this->validate([
                 'current_password' => $this->currentPasswordRules(),
@@ -153,6 +162,8 @@ class Security extends Component
      */
     public function deletePasskey(DeletePasskey $deletePasskey): void
     {
+        DemoAccount::abortIfDemo(Auth::user());
+
         if (! $this->deletingPasskeyId) {
             return;
         }
@@ -181,6 +192,8 @@ class Security extends Component
      */
     public function enable(EnableTwoFactorAuthentication $enableTwoFactorAuthentication): void
     {
+        DemoAccount::abortIfDemo(Auth::user());
+
         $enableTwoFactorAuthentication(auth()->user());
 
         if (! $this->requiresConfirmation) {
@@ -230,6 +243,8 @@ class Security extends Component
      */
     public function confirmTwoFactor(ConfirmTwoFactorAuthentication $confirmTwoFactorAuthentication): void
     {
+        DemoAccount::abortIfDemo(Auth::user());
+
         $this->validate();
 
         $confirmTwoFactorAuthentication(auth()->user(), $this->code);
@@ -254,6 +269,8 @@ class Security extends Component
      */
     public function disable(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {
+        DemoAccount::abortIfDemo(Auth::user());
+
         $disableTwoFactorAuthentication(auth()->user());
 
         $this->twoFactorEnabled = false;
@@ -277,6 +294,19 @@ class Security extends Component
         if (! $this->requiresConfirmation) {
             $this->twoFactorEnabled = auth()->user()->hasEnabledTwoFactorAuthentication();
         }
+    }
+
+    public function render(): View
+    {
+        // All'utente demo si mostra solo perché qui non può cambiare niente.
+        if ($this->isDemo) {
+            return view('livewire.settings.demo-locked', [
+                'heading' => 'Sicurezza',
+                'subheading' => 'Password, autenticazione a due fattori e passkey',
+            ]);
+        }
+
+        return view('livewire.settings.security');
     }
 
     /**

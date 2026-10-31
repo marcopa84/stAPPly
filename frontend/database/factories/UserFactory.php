@@ -3,7 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Support\DemoAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -55,6 +57,30 @@ class UserFactory extends Factory
             'two_factor_secret' => encrypt('secret'),
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Una sandbox della demo ancora aperta, come la crea App\Services\Demo\DemoSandbox
+     * (ma senza le copie degli agenti demo).
+     */
+    public function demoSandbox(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'name' => 'Visitatore demo',
+            'email' => DemoAccount::newSandboxEmail(),
+            'password' => Hash::make(Config::string('stapply.demo.password')),
+            'demo_expires_at' => now()->addMinutes(Config::integer('stapply.demo.sandbox_minutes')),
+        ]);
+    }
+
+    /**
+     * Una sandbox già scaduta, da cancellare con stapply:prune-demo.
+     */
+    public function expiredDemoSandbox(): static
+    {
+        return $this->demoSandbox()->state(fn (array $attributes) => [
+            'demo_expires_at' => now()->subMinute(),
         ]);
     }
 }
