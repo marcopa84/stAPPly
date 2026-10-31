@@ -1,0 +1,60 @@
+name: backend
+
+# Gira solo quando cambia il backend o il contratto: i test del backend controllano
+# che ogni risposta abbia la forma degli esempi in docs/contract/.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'docs/api.md'
+      - 'docs/contract/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'docs/api.md'
+      - 'docs/contract/**'
+      - '.github/workflows/backend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Python 3.12 lo sceglie uv da backend/.python-version.
+      - name: Setup uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          working-directory: backend
+
+      # --locked fallisce se uv.lock non corrisponde a pyproject.toml, invece di aggiornarlo.
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check
+
+      - name: Format
+        run: uv run ruff format --check
+
+      # Nessuna chiave OpenAI: embedding e modello sono finti e i socket sono bloccati.
+      - name: Tests
+        run: uv run pytest -q
