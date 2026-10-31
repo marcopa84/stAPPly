@@ -94,7 +94,7 @@ def test_le_rotte_piu_delicate_sono_tra_quelle_controllate():
     } <= set(ROTTE_CON_CHIAVE)
 
 
-@pytest.mark.parametrize(("metodo", "percorso"), ROTTE_CON_CHIAVE, ids=" ".join)
+@pytest.mark.parametrize(("metodo", "percorso"), ROTTE_CON_CHIAVE)
 def test_ogni_rotta_tranne_health_vuole_la_chiave(imposta, metodo, percorso):
     imposta(internal_api_key=CHIAVE)
     risposta = TestClient(create_app()).request(metodo, percorso.format(**ESEMPI_DI_ID))

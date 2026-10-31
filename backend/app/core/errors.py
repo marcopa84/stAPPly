@@ -7,13 +7,16 @@ mostrabile all'utente, quindi non deve contenere percorsi o dettagli interni.
 | Eccezione                | HTTP | Quando                                                        |
 |--------------------------|------|---------------------------------------------------------------|
 | `NonTrovato`             | 404  | documento, tabella o (per /sql) tabelle dell'agente mancanti; |
-|                          |      | per /clone, agente da copiare senza dati                      |
+|                          |      | per /clone, agente da copiare senza dati; per un upload,      |
+|                          |      | agente cancellato mentre il file si indicizzava               |
 | `LimiteRaggiunto`        | 409  | troppi documenti o tabelle per l'agente                       |
 | `AgenteNonVuoto`         | 409  | per /clone, agente di destinazione che ha già dei dati        |
-| `FileTroppoGrande`       | 413  | file oltre MAX_UPLOAD_MB, o zip che si gonfia troppo          |
+| `FileTroppoGrande`       | 413  | file oltre MAX_UPLOAD_MB, o troppo grande una volta letto:    |
+|                          |      | zip che si gonfia, documento oltre MAX_CHUNKS_PER_DOCUMENT    |
+|                          |      | chunk, tabella oltre MAX_CELLE celle                          |
 | `FileNonAmmesso`         | 415  | estensione non ammessa o contenuto diverso dall'estensione    |
 | `ContenutoNonValido`     | 422  | file illeggibile o vuoto, id non valido, query SQL rifiutata  |
-| `ProviderNonDisponibile` | 502  | OpenAI non risponde o rifiuta la chiamata                     |
+| `ProviderNonDisponibile` | 502  | OpenAI non risponde in tempo o rifiuta la chiamata            |
 | `ModelloNonDisponibile`  | 502  | chiave OpenAI mancante o rifiutata (messaggio generico)       |
 
 Tutte derivano da `ErroreStapply`, così all'API basta un solo exception handler.

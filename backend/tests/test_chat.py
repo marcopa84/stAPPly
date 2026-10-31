@@ -216,7 +216,7 @@ class ModelloLento(ModelloFinto):
 
 
 def test_un_turno_oltre_il_tempo_massimo_si_ferma_e_non_resta_in_memoria(valtesa, monkeypatch):
-    monkeypatch.setattr(chat, "TEMPO_MASSIMO_TURNO", 0.5)
+    monkeypatch.setattr(chat, "TEMPO_MASSIMO_TURNO", 2.0)
     modello = ModelloLento([chiama("query_db", {"sql": SQL_IN_ATTESA})])
 
     with pytest.raises(ProviderNonDisponibile, match="non ha risposto in tempo"):

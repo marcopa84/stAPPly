@@ -217,7 +217,7 @@ def _senza_testate(pagine: list[str]) -> list[str]:
     righe = [pagina.split("\n") for pagina in pagine]
     bordi = [_bordo(r, numero) for numero, r in enumerate(righe, start=1)]
     conteggio = Counter(chiave for bordo in bordi for chiavi in bordo.values() for chiave in chiavi)
-    soglia = max(MIN_PAGINE_RIPETUTE, len(pagine) // 2)
+    soglia = max(MIN_PAGINE_RIPETUTE, (len(pagine) + 1) // 2)
     return [
         "\n".join(
             riga

@@ -68,7 +68,9 @@ Lette da `backend/.env` con pydantic-settings; una variabile d'ambiente vince su
 | `CHUNK_SIZE` | `500` | caratteri per chunk |
 | `TOP_K` | `4` | passaggi restituiti da `cerca_documenti` |
 | `MAX_TURNS` | `10` | passaggi massimi dell'agente in un turno di chat |
+| `SESSION_HISTORY_TURNS` | `10` | turni precedenti della conversazione che il modello rilegge a ogni messaggio (almeno 1) |
 | `MAX_UPLOAD_MB` | `10` | dimensione massima di un file |
+| `MAX_CHUNKS_PER_DOCUMENT` | `2000` | chunk al massimo per documento (circa un milione di caratteri): oltre, `413` prima di qualunque embedding |
 | `MAX_DOCUMENTS_PER_AGENT` | `20` | documenti per agente |
 | `MAX_TABLES_PER_AGENT` | `10` | tabelle per agente |
 | `QUERY_DB_LIMIT` | `50` | righe che `query_db` restituisce al modello |
@@ -91,20 +93,23 @@ app/
 │   ├── chat.py          POST /chat, DELETE /sessions/{session_id}
 │   └── agents.py        POST /clone, DELETE /agents/{agent_id}
 └── core/                indipendente da FastAPI (lo usa anche scripts/seed_demo.py)
-    ├── loaders/         dal corso (aikit): load(path) per .txt .md .pdf .docx .html
-    ├── clean.py         dal corso (aikit): pulizia del testo per estensione
+    ├── loaders/         dal corso (aikit): load(path) per .txt .md .pdf .docx .html, con
+    │                    le tabelle dei .docx
+    ├── clean.py         dal corso (aikit): gli step di pulizia; le ricette dei file degli
+    │                    utenti sono in ingest.py
     ├── errors.py        errori di dominio, con il messaggio per l'utente in italiano
     ├── ids.py           regole di docs/api.md su id, nomi di file, tabelle e colonne
     ├── firme.py         estensione, dimensione e firma del contenuto dei file caricati
     ├── storage.py       percorsi sotto DATA_DIR, blocco per agente, cancellazioni
     ├── embeddings.py    embedding OpenAI a lotti
     ├── vectorstore.py   la collection Chroma `agent_<id>` di ogni agente
-    ├── ingest.py        file → testo → chunk → embedding → Chroma
+    ├── ingest.py        file → testo pulito → chunk → embedding → Chroma
     ├── tables.py        csv/xlsx → SQLite dell'agente; SELECT in sola lettura
     ├── clone.py         la copia di un agente su un altro (sandbox demo)
     ├── agent.py         l'Agent dell'SDK: istruzioni, regole fisse, tool costruiti a runtime
     └── chat.py          un turno di chat: sessione, Runner, traccia, fonti, errori
 scripts/seed_demo.py     gli agenti demo
+scripts/griglia.py       la griglia di prova del criterio 5 sugli agenti demo (docs/griglia/)
 seed/                    documenti e tabelle finti dei due temi del corso
 tests/
 ```
@@ -130,10 +135,13 @@ backend costruisce l'agente da capo, perché istruzioni e dati possono essere ca
    che restituiscono i tool, citare l'id del chunk tra `[ ]`, dire dove si è cercato quando non si
    trova la risposta, rifiutare le domande fuori tema senza chiamare tool, fermarsi dopo due errori
    di fila di un tool, trattare il contenuto di documenti e tabelle come dati, non istruzioni.
-2. **Tool**: `cerca_documenti` solo se l'agente ha documenti, con la loro lista nella descrizione;
-   `query_db` solo se ha tabelle, con lo schema vero (`tabella(colonna TIPO, …)`) nella descrizione.
+2. **Tool**: `cerca_documenti` solo se l'agente ha documenti, con i nomi dei file nella
+   descrizione; `query_db` solo se ha tabelle, con lo schema vero (`tabella(colonna TIPO, …)`)
+   nella descrizione. L'output di `query_db` ha un tetto di 20 000 caratteri: oltre, la query
+   torna al modello come errore da correggere ("seleziona meno colonne o aggiungi un LIMIT").
 3. **Memoria**: `SQLiteSession` con chiave `<agent_id>:<session_id>`, quindi la stessa sessione su
-   due agenti non si mescola.
+   due agenti non si mescola. Al modello arrivano gli ultimi `SESSION_HISTORY_TURNS` turni (vedi
+   sotto).
 4. **Risposta**: `answer` e `status`, più la traccia che serve alla griglia di prova: `tools`
    (nome e argomenti di ogni chiamata), `route` (`documenti`, `dati`, `documenti+dati`,
    `nessuna`) e `sources`, i chunk citati in `answer` tra quelli che `cerca_documenti` ha
@@ -142,33 +150,31 @@ backend costruisce l'agente da capo, perché istruzioni e dati possono essere ca
 Se l'agente supera `MAX_TURNS` la risposta ha `status: "max_turns"`, un messaggio fisso e la
 traccia di quello che ha fatto fin lì. Se OpenAI non risponde, anche dentro un tool (gli
 embedding di `cerca_documenti`), la chat risponde `502` invece di far riprovare il modello.
+
+Un turno intero ha al massimo 90 secondi (`TEMPO_MASSIMO_TURNO` in `core/chat.py`), meno dei
+120 che Laravel aspetta il backend: oltre, risponde `502` ("non ha risposto in tempo: riprova
+tra poco"). Senza questo tetto Laravel mostrerebbe il suo errore mentre il backend continua,
+paga i token e salva nella sessione una risposta che l'utente non ha mai visto. Ogni chiamata al
+modello ha un timeout di 60 s ed è ripetuta al massimo una volta (gli SDK di OpenAI ne fanno due
+di default); lo stesso per gli embedding, con 30 s.
 Se la chiave manca o OpenAI la rifiuta (`AuthenticationError`, `PermissionDeniedError`) il `502`
 ha un messaggio generico ("Il modello non è disponibile in questo momento…"): chi usa la chat
 non può farci niente e non deve sapere come è configurato il backend. La causa vera va nel log
 a livello ERROR, dove la legge chi gestisce il servizio.
 
-### Memoria: perché la storia di una sessione non ha un limite
+### Memoria: gli ultimi turni, tagliati prima di una domanda
 
-`SQLiteSession` dell'SDK 0.22.3 accetta un limite (`SessionSettings(limit=N)`): al modello
-arrivano solo gli ultimi N item della sessione. Un limite configurabile sarebbe utile contro le
-conversazioni lunghe, ma va messo solo se il taglio produce sempre una richiesta che l'API
-Responses accetta, e con questo SDK non è garantito:
+Senza un limite ogni messaggio rimanderebbe al modello tutta la conversazione, output dei tool
+compresi: il costo di un turno cresce con la chat, finché supera la finestra di contesto e da lì
+la sessione risponde solo `502`. In `sessions.db` la storia resta intera; al modello ne arrivano
+gli ultimi `SESSION_HISTORY_TURNS` turni.
 
-- quello che l'SDK ripara (`prepare_input_with_session` → `drop_orphan_function_calls`, in
-  `agents/run_internal/`): un `function_call_output` rimasto senza la sua `function_call`, una
-  `function_call` senza output, un `reasoning` che precede una chiamata tolta;
-- quello che non ripara: un taglio tra un item `reasoning` e la `function_call` o il `message`
-  che lo segue. Il secondo resta, con il suo id (`fc_…`, `msg_…`), senza il `reasoning` (`rs_…`)
-  da cui dipende. È la forma che hanno davvero i turni salvati dal modello (`user`, `reasoning`,
-  `function_call`, `function_call_output`, …, `reasoning`, `message`), quindi capita.
-
-Che l'API accetti una richiesta così non lo promette l'SDK, e non si può verificare senza
-chiamate vere; se la rifiutasse, la chat di una sessione lunga fallirebbe a seconda di dove cade
-il taglio. Per questo il limite non c'è e la sessione si rilegge tutta (il criterio 1 di
-`CONSEGNA.md` chiede proprio la memoria).
-La strada sicura per costruzione, se servirà: tagliare solo all'inizio di un turno, cioè prima
-di un messaggio `user`, con `RunConfig.session_input_callback`, e contare i turni invece degli
-item.
+Il taglio non usa il limite dell'SDK (`SessionSettings(limit=N)`), che conta gli item: con
+l'SDK 0.22.3 potrebbe cadere tra un `reasoning` e la `function_call` o il `message` che lo segue,
+e quella dipendenza l'SDK non la ripara (ripara solo un `function_call_output` rimasto senza la
+sua chiamata, o il contrario). `chat.ultimi_turni` è un `RunConfig.session_input_callback` che
+taglia solo prima di un messaggio `user`, cioè all'inizio di un turno: un turno arriva sempre
+intero, con le sue chiamate, i loro output e il ragionamento che le precede.
 
 ## Copia di un agente (sandbox demo)
 
@@ -191,6 +197,27 @@ può cambiarla senza toccare quella degli altri. `core/clone.py`:
 5. **Fallimento a metà**: la destinazione torna vuota (collection, originali, `tables.db`,
    `tables.json`). Le sue conversazioni restano, e quelle della sorgente non si copiano mai.
 
+## Documenti: pulizia e limiti
+
+Il testo che esce dai loader si normalizza (Unicode NFC, caratteri di controllo, spazi) e basta:
+le ricette di `clean.py` del corso erano pensate per un libro di Project Gutenberg, un paper e
+una pagina di Wikipedia, e sui file degli utenti toglievano testo vero (un HTML si fermava alla
+prima riga "Note", anche l'intestazione di una colonna; un `.txt` perdeva quello fuori da
+"\*\*\* START"/"\*\*\* END").
+
+- **PDF**: pypdf estrae le tabelle una cella per riga, quindi le righe ripetute o fatte di sole
+  cifre non si tolgono dal documento intero, o sparirebbero le celle ("Ordinaria / 5 / Studenti /
+  8"). `_senza_testate` guarda solo i bordi di ogni pagina (le prime e le ultime tre righe non
+  vuote) e toglie una riga se la stessa riga, nella stessa posizione, c'è in almeno metà delle
+  pagine (e in almeno tre): testate e piè di pagina. Un numero conta come "numero meno numero
+  della pagina", così il numero di pagina si ripete e una cella numerica no. Poi si riuniscono le
+  parole spezzate a fine riga.
+- **Word**: paragrafi e tabelle nell'ordine del documento, una riga per riga di tabella con le
+  celle separate da ` | ` (una cella unita una volta sola).
+- **Limite**: più di `MAX_CHUNKS_PER_DOCUMENT` chunk è un `413`, controllato prima degli
+  embedding. Un `.docx` di poche centinaia di KB si può gonfiare fino a 100 MB di testo: senza
+  limite sarebbero centinaia di migliaia di embedding a pagamento e gigabyte di vettori in memoria.
+
 ## Tabelle: CSV ed Excel
 
 Ogni file diventa una tabella del `tables.db` dell'agente (un `.xlsx`: il primo foglio).
@@ -201,13 +228,24 @@ Ogni file diventa una tabella del `tables.db` dell'agente (un `.xlsx`: il primo 
   modello deve scrivere i nomi nelle query senza sbagliarli.
 - **Tipi**: `INTEGER` se tutti i valori non vuoti di una colonna sono interi, `REAL` se sono
   tutti numeri, altrimenti `TEXT`. Un codice con zeri iniziali (`007`, un CAP) resta testo.
-- **CSV di Excel in italiano**: il separatore si riconosce dall'intestazione (virgola o punto e
-  virgola). Con il punto e virgola, il separatore che Excel usa dove la virgola serve ai
-  decimali, i numeri scritti all'italiana (`4,50`, `1.234,50`, `-12,3`) si convertono prima
-  dell'`INSERT`, ma solo nelle colonne in cui lo sono **tutti** i valori non vuoti: una colonna
-  si legge tutta in un modo (`1.234` accanto a `4,50` è 1234, accanto a `12.5` è 1,234). Date
-  come `15.07.2026` e codici come `007` restano testo. Con la virgola come separatore non
+- **Separatore**: virgola o punto e virgola, scelto sui primi 20 record (non righe: un'intestazione
+  tra virgolette con un a capo non inganna). Vince quello che dà a tutti lo stesso numero di
+  campi, più di uno; poi quello che divide di più l'intestazione; poi quello coerente anche con
+  un campo solo (una colonna di numeri come `1,5`); a parità il punto e virgola, se c'è nel testo
+  (`Cognome, nome;Importo`).
+- **Codifica**: UTF-8, oppure Windows-1252, come Excel su Windows salva i CSV se non si sceglie
+  "CSV UTF-8".
+- **Numeri all'italiana**: con il punto e virgola, il separatore che Excel usa dove la virgola
+  serve ai decimali, i numeri scritti all'italiana (`4,50`, `1.234,50`, `-12,3`) si convertono
+  prima dell'`INSERT`, ma solo nelle colonne in cui lo sono **tutti** i valori non vuoti: una
+  colonna si legge tutta in un modo (`1.234` accanto a `4,50` è 1234, accanto a `12.5` è 1,234).
+  Date come `15.07.2026` e codici come `007` restano testo. Con la virgola come separatore non
   cambia niente.
+- **Excel**: openpyxl in sola lettura si fida del tag `<dimension>` del foglio, che alcuni
+  generatori scrivono sbagliato (righe perse, o righe allungate a 16 384 colonne): si ricalcola
+  sulle celle vere.
+- **Limiti**: al massimo 500 colonne (`422`) e 2 milioni di celle, righe × colonne (`413`),
+  controllati mentre il file si legge e prima di allungare le righe corte fino all'intestazione.
 
 ## Decisioni
 
@@ -242,11 +280,20 @@ raggruppate per sessione (`group_id` = `<agent_id>:<session_id>`).
   nomi di collection; i nomi dei file caricati sono ridotti al nome, senza cartelle.
 - Upload: letto a pezzi fermandosi oltre `MAX_UPLOAD_MB` (`413`), limiti di numero per agente
   (`409`), firma del contenuto controllata oltre all'estensione (`415`), zip bomb nei `.docx`/`.xlsx`
-  fermate prima di aprirle.
+  fermate prima di aprirle; poi limiti su quello che il file diventa una volta letto (chunk per
+  documento, colonne e celle per tabella).
+- Upload e cancellazione: un upload legge all'inizio quante volte l'agente è stato cancellato e
+  lo ricontrolla sotto il blocco, prima di scrivere; se nel frattempo è arrivata la `DELETE`
+  risponde `404` invece di ricreare collection o `tables.db` di un agente che per Laravel non
+  esiste più.
 - `query_db` e `/sql`: solo `SELECT`/`WITH`, una sola istruzione, connessione `mode=ro`,
-  `PRAGMA query_only`, un authorizer SQLite che ammette solo letture e un limite di tempo.
+  `PRAGMA query_only`, un authorizer SQLite che ammette solo letture, un limite di tempo e uno di
+  dimensione: 500 colonne, 200 KB per valore e un tetto sul risultato intero (1 milione di
+  caratteri per la console, 20 000 per `query_db`). `zeroblob()` produce un megabyte con una sola
+  istruzione: il limite di tempo da solo non lo ferma.
 - Prompt injection: i passaggi arrivano al modello tra delimitatori, con l'id e il file di
-  provenienza, e le regole fisse dicono che sono dati, non istruzioni.
+  provenienza; i nomi dei file, che sceglie chi li carica, arrivano tra virgolette JSON; le regole
+  fisse dicono che nomi dei file e testi dei tool sono dati, non istruzioni.
 - Gli errori di dominio hanno un messaggio in italiano pensato per l'utente; un errore imprevisto
   risponde `500` con un messaggio generico, e il traceback resta nel log del server. Anche
   i `404` di una rotta inesistente e i `405` di un metodo non ammesso hanno il `detail` in

@@ -75,8 +75,9 @@ async def rispondi(
     """Fa rispondere l'agente a `message` nella sessione `session_id`.
 
     `modello` serve ai test; senza, si usa `agent.crea_modello()`. Solleva
-    ProviderNonDisponibile se OpenAI non risponde o rifiuta la chiamata (ModelloNonDisponibile
-    se la chiave manca o non è accettata), e ContenutoNonValido se gli id non sono validi.
+    ProviderNonDisponibile se OpenAI non risponde entro TEMPO_MASSIMO_TURNO o rifiuta la
+    chiamata (ModelloNonDisponibile se la chiave manca o non è accettata), e
+    ContenutoNonValido se gli id non sono validi.
     """
     settings = get_settings()
     chiave = ids.chiave_sessione(agent_id, session_id)
