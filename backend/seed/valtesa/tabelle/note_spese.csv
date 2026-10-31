@@ -1,0 +1,402 @@
+id,dipendente_id,data,citta,voce,importo,stato
+1001,26,2026-03-09,Torino,hotel,80.00,approvata
+1002,23,2026-01-21,Firenze,treno,90.80,approvata
+1003,104,2026-04-09,Brescia,pranzo,15.20,approvata
+1004,23,2026-09-16,Milano,pranzo,20.90,in attesa
+1005,71,2026-08-17,Trento,km,97.60,approvata
+1006,79,2026-07-20,Venezia,cena,25.90,respinta
+1007,29,2026-06-11,Padova,hotel,79.00,approvata
+1008,30,2026-06-22,Padova,hotel,96.00,approvata
+1009,85,2026-09-02,Roma,treno,110.60,in attesa
+1010,114,2026-06-15,Roma,cena,23.40,approvata
+1011,57,2026-05-13,Brescia,cena,21.70,approvata
+1012,23,2026-03-26,Trento,cena,22.00,approvata
+1013,17,2026-07-27,Bologna,pranzo,19.20,approvata
+1014,91,2026-09-03,Genova,cena,23.90,approvata
+1015,102,2026-05-14,Genova,treno,68.80,approvata
+1016,17,2026-05-22,Milano,km,79.20,approvata
+1017,102,2026-03-10,Padova,km,122.40,approvata
+1018,98,2026-06-22,Verona,pranzo,16.70,approvata
+1019,26,2026-03-31,Milano,pranzo,18.00,approvata
+1020,41,2026-07-06,Milano,pranzo,17.80,approvata
+1021,87,2026-06-01,Milano,pranzo,11.80,approvata
+1022,23,2026-01-21,Firenze,pranzo,13.00,approvata
+1023,23,2026-04-29,Milano,pranzo,15.70,approvata
+1024,104,2026-04-10,Brescia,pranzo,19.20,approvata
+1025,68,2026-04-28,Trento,pranzo,17.30,approvata
+1026,30,2026-01-30,Milano,pranzo,19.90,respinta
+1027,68,2026-04-10,Torino,pranzo,13.70,approvata
+1028,24,2026-09-15,Milano,treno,27.10,in attesa
+1029,68,2026-04-29,Trento,pranzo,9.50,approvata
+1030,99,2026-01-16,Bologna,pranzo,19.50,approvata
+1031,30,2026-04-14,Bologna,cena,22.40,respinta
+1032,68,2026-07-03,Padova,treno,41.70,in attesa
+1033,23,2026-06-10,Milano,treno,31.80,approvata
+1034,30,2026-04-16,Bologna,treno,60.70,approvata
+1035,68,2026-04-16,Trento,pranzo,16.70,approvata
+1036,30,2026-06-23,Padova,hotel,79.00,approvata
+1037,17,2026-03-30,Milano,km,80.80,approvata
+1038,79,2026-06-25,Roma,pranzo,16.10,respinta
+1039,79,2026-08-12,Milano,pranzo,22.60,approvata
+1040,114,2026-06-15,Roma,hotel,103.00,approvata
+1041,61,2026-07-08,Venezia,km,33.60,in attesa
+1042,109,2026-04-21,Brescia,cena,24.60,approvata
+1043,23,2026-07-15,Milano,cena,38.50,in attesa
+1044,23,2026-06-10,Milano,cena,38.00,approvata
+1045,79,2026-08-19,Brescia,km,120.00,in attesa
+1046,2,2026-09-15,Bologna,pranzo,16.70,in attesa
+1047,30,2026-08-12,Milano,km,81.60,approvata
+1048,29,2026-06-11,Padova,cena,20.00,approvata
+1049,9,2026-02-16,Verona,km,77.60,approvata
+1050,30,2026-06-11,Genova,km,193.60,approvata
+1051,44,2026-05-11,Bologna,pranzo,11.90,approvata
+1052,17,2026-05-22,Milano,pranzo,15.80,approvata
+1053,22,2026-08-26,Bologna,km,179.20,in attesa
+1054,36,2026-07-20,Verona,treno,21.70,in attesa
+1055,85,2026-09-02,Roma,pranzo,21.20,in attesa
+1056,17,2026-03-30,Milano,pranzo,13.00,approvata
+1057,47,2026-08-18,Roma,treno,156.00,approvata
+1058,68,2026-01-08,Roma,hotel,119.00,approvata
+1059,29,2026-06-10,Padova,pranzo,17.70,approvata
+1060,102,2026-01-13,Milano,km,76.80,approvata
+1061,67,2026-04-29,Roma,cena,24.60,approvata
+1062,91,2026-02-16,Padova,pranzo,12.00,approvata
+1063,91,2026-07-16,Bergamo,pranzo,12.90,approvata
+1064,30,2026-04-23,Firenze,treno,78.90,approvata
+1065,68,2026-06-18,Roma,treno,166.30,approvata
+1066,26,2026-08-13,Bergamo,km,50.40,in attesa
+1067,104,2026-04-09,Brescia,hotel,88.00,respinta
+1068,47,2026-08-19,Roma,pranzo,14.90,approvata
+1069,26,2026-06-24,Roma,cena,31.50,approvata
+1070,87,2026-03-04,Roma,cena,32.10,approvata
+1071,68,2026-06-19,Roma,pranzo,13.20,approvata
+1072,30,2026-06-11,Genova,pranzo,14.60,approvata
+1073,69,2026-08-31,Padova,pranzo,14.90,in attesa
+1074,98,2026-06-22,Verona,km,56.00,approvata
+1075,17,2026-06-15,Milano,treno,19.60,approvata
+1076,47,2026-08-18,Roma,pranzo,16.20,approvata
+1077,23,2026-06-23,Roma,pranzo,23.90,approvata
+1078,102,2026-02-03,Verona,pranzo,18.20,approvata
+1079,108,2026-04-20,Roma,hotel,127.00,approvata
+1080,30,2026-06-22,Padova,treno,40.80,approvata
+1081,104,2026-04-21,Venezia,treno,10.50,approvata
+1082,30,2026-04-16,Bologna,pranzo,13.50,approvata
+1083,23,2026-06-10,Milano,hotel,139.00,approvata
+1084,101,2026-03-26,Roma,pranzo,14.90,approvata
+1085,30,2026-04-23,Firenze,cena,15.80,approvata
+1086,87,2026-03-11,Trento,pranzo,10.20,approvata
+1087,23,2026-06-11,Milano,pranzo,16.80,approvata
+1088,23,2026-07-16,Milano,pranzo,18.40,approvata
+1089,22,2026-08-26,Bologna,pranzo,15.00,in attesa
+1090,29,2026-06-11,Padova,pranzo,11.50,approvata
+1091,68,2026-04-15,Trento,hotel,74.00,approvata
+1092,17,2026-09-11,Firenze,pranzo,18.50,in attesa
+1093,17,2026-07-28,Bologna,cena,15.30,approvata
+1094,79,2026-06-24,Roma,treno,124.30,respinta
+1095,23,2026-09-14,Milano,km,80.80,in attesa
+1096,87,2026-03-04,Roma,hotel,134.00,approvata
+1097,75,2026-05-08,Venezia,km,32.00,approvata
+1098,100,2026-05-20,Verona,km,57.60,approvata
+1099,91,2026-09-04,Genova,pranzo,17.40,approvata
+1100,108,2026-06-16,Torino,pranzo,12.50,approvata
+1101,30,2026-06-23,Padova,pranzo,19.10,approvata
+1102,29,2026-02-03,Bergamo,pranzo,18.70,approvata
+1103,68,2026-05-26,Bergamo,treno,13.50,approvata
+1104,44,2026-05-12,Bologna,hotel,75.00,approvata
+1105,55,2026-09-18,Trento,treno,33.80,in attesa
+1106,55,2026-03-06,Milano,pranzo,19.80,approvata
+1107,91,2026-07-21,Bergamo,pranzo,15.40,in attesa
+1108,92,2026-02-17,Firenze,pranzo,12.40,respinta
+1109,68,2026-01-15,Roma,treno,171.80,approvata
+1110,104,2026-04-08,Brescia,pranzo,18.10,approvata
+1111,102,2026-03-16,Torino,km,194.40,approvata
+1112,91,2026-02-16,Padova,hotel,82.00,approvata
+1113,117,2026-06-26,Milano,treno,26.20,approvata
+1114,87,2026-03-10,Trento,cena,25.10,respinta
+1115,23,2026-03-27,Trento,pranzo,17.60,approvata
+1116,23,2026-04-29,Milano,treno,19.50,approvata
+1117,30,2026-03-16,Milano,treno,23.90,approvata
+1118,68,2026-03-19,Milano,treno,21.30,respinta
+1119,98,2026-05-20,Padova,hotel,89.00,approvata
+1120,41,2026-07-06,Milano,km,78.40,approvata
+1121,23,2026-09-16,Milano,treno,24.20,in attesa
+1122,36,2026-06-05,Milano,treno,27.70,approvata
+1123,109,2026-09-18,Milano,treno,59.10,in attesa
+1124,68,2026-01-08,Roma,treno,138.40,approvata
+1125,69,2026-08-31,Padova,treno,43.20,in attesa
+1126,23,2026-02-24,Padova,pranzo,17.20,approvata
+1127,68,2026-07-20,Milano,pranzo,23.10,approvata
+1128,30,2026-09-16,Milano,treno,25.90,in attesa
+1129,102,2026-05-18,Milano,pranzo,17.40,approvata
+1130,30,2026-04-14,Bologna,pranzo,9.50,respinta
+1131,68,2026-06-18,Roma,cena,23.20,approvata
+1132,87,2026-09-15,Milano,pranzo,12.70,in attesa
+1133,29,2026-05-13,Roma,pranzo,15.10,approvata
+1134,23,2026-06-22,Roma,treno,161.20,approvata
+1135,30,2026-08-04,Milano,km,77.60,approvata
+1136,29,2026-06-12,Padova,pranzo,18.50,approvata
+1137,92,2026-02-17,Firenze,treno,68.80,respinta
+1138,2,2026-06-17,Treviso,pranzo,19.50,approvata
+1139,104,2026-04-08,Brescia,treno,34.70,approvata
+1140,73,2026-03-19,Roma,treno,159.90,approvata
+1141,23,2026-03-02,Verona,pranzo,13.20,approvata
+1142,9,2026-06-30,Vicenza,km,33.60,approvata
+1143,73,2026-02-18,Torino,pranzo,13.20,approvata
+1144,85,2026-09-02,Roma,cena,31.10,in attesa
+1145,87,2026-03-04,Roma,treno,140.50,approvata
+1146,109,2026-04-20,Verona,treno,25.30,approvata
+1147,26,2026-03-12,Milano,km,84.00,approvata
+1148,117,2026-06-26,Milano,pranzo,19.90,approvata
+1149,57,2026-05-14,Brescia,pranzo,11.90,approvata
+1150,68,2026-01-09,Roma,pranzo,13.60,approvata
+1151,87,2026-03-26,Trento,treno,34.70,respinta
+1152,30,2026-03-16,Milano,pranzo,17.70,approvata
+1153,68,2026-01-15,Roma,cena,32.20,approvata
+1154,23,2026-01-21,Firenze,hotel,94.00,respinta
+1155,26,2026-06-24,Roma,treno,159.00,approvata
+1156,24,2026-09-15,Milano,pranzo,22.10,in attesa
+1157,91,2026-02-05,Milano,treno,19.30,approvata
+1158,102,2026-07-27,Torino,pranzo,15.00,approvata
+1159,109,2026-04-21,Brescia,treno,41.10,approvata
+1160,36,2026-07-20,Verona,pranzo,14.10,in attesa
+1161,68,2026-02-11,Roma,cena,30.20,approvata
+1162,68,2026-04-28,Trento,cena,16.90,approvata
+1163,68,2026-04-09,Torino,pranzo,15.30,approvata
+1164,57,2026-03-05,Venezia,treno,9.00,approvata
+1165,26,2026-07-16,Milano,pranzo,24.10,approvata
+1166,109,2026-09-18,Milano,pranzo,15.20,in attesa
+1167,109,2026-04-21,Brescia,pranzo,17.90,approvata
+1168,114,2026-06-15,Roma,treno,137.00,approvata
+1169,57,2026-09-16,Milano,treno,69.40,in attesa
+1170,17,2026-01-27,Verona,cena,22.50,approvata
+1171,85,2026-09-02,Roma,hotel,110.00,in attesa
+1172,114,2026-06-15,Roma,pranzo,15.30,approvata
+1173,9,2026-06-30,Vicenza,pranzo,13.50,approvata
+1174,30,2026-01-30,Milano,treno,28.40,respinta
+1175,102,2026-05-14,Genova,hotel,80.00,approvata
+1176,68,2026-01-08,Roma,pranzo,11.30,approvata
+1177,68,2026-08-04,Bologna,treno,45.80,approvata
+1178,91,2026-02-18,Padova,pranzo,10.50,approvata
+1179,101,2026-03-26,Roma,hotel,100.00,approvata
+1180,23,2026-06-22,Roma,pranzo,22.20,approvata
+1181,104,2026-04-08,Brescia,hotel,91.00,approvata
+1182,71,2026-08-17,Trento,pranzo,18.70,approvata
+1183,30,2026-04-14,Bologna,treno,55.30,respinta
+1184,57,2026-05-13,Brescia,pranzo,12.30,approvata
+1185,29,2026-02-03,Bergamo,treno,11.60,approvata
+1186,30,2026-09-16,Milano,pranzo,12.30,in attesa
+1187,80,2026-07-31,Vicenza,km,33.60,approvata
+1188,109,2026-02-10,Verona,pranzo,10.90,approvata
+1189,30,2026-06-22,Padova,cena,28.50,approvata
+1190,23,2026-03-02,Verona,treno,16.10,approvata
+1191,26,2026-06-24,Roma,pranzo,24.00,approvata
+1192,23,2026-02-19,Firenze,treno,77.70,approvata
+1193,75,2026-05-08,Venezia,pranzo,10.30,approvata
+1194,29,2026-06-23,Milano,pranzo,19.60,approvata
+1195,91,2026-02-16,Padova,cena,21.20,approvata
+1196,57,2026-05-13,Brescia,hotel,95.00,approvata
+1197,29,2026-06-23,Milano,km,78.40,approvata
+1198,91,2026-06-05,Milano,treno,21.70,approvata
+1199,75,2026-05-19,Brescia,km,129.60,approvata
+1200,104,2026-07-03,Verona,treno,20.90,in attesa
+1201,87,2026-02-17,Milano,treno,27.30,approvata
+1202,75,2026-08-04,Brescia,pranzo,11.80,in attesa
+1203,87,2026-06-01,Milano,km,78.40,approvata
+1204,91,2026-07-23,Milano,km,85.60,approvata
+1205,101,2026-03-27,Roma,pranzo,12.70,approvata
+1206,80,2026-07-31,Vicenza,pranzo,10.60,approvata
+1207,79,2026-09-02,Venezia,treno,11.90,in attesa
+1208,79,2026-06-24,Roma,cena,29.20,respinta
+1209,22,2026-08-26,Bologna,cena,29.50,in attesa
+1210,91,2026-05-21,Milano,cena,31.30,approvata
+1211,102,2026-03-10,Padova,pranzo,12.50,approvata
+1212,91,2026-02-17,Padova,pranzo,12.10,approvata
+1213,26,2026-07-06,Milano,km,84.00,approvata
+1214,91,2026-07-23,Milano,pranzo,14.80,approvata
+1215,26,2026-03-10,Torino,hotel,72.00,approvata
+1216,71,2026-04-22,Verona,treno,21.80,approvata
+1217,109,2026-02-10,Verona,km,78.40,approvata
+1218,23,2026-01-22,Firenze,pranzo,18.70,approvata
+1219,73,2026-03-20,Roma,pranzo,18.30,approvata
+1220,91,2026-02-16,Padova,treno,44.90,approvata
+1221,26,2026-03-10,Torino,pranzo,9.90,approvata
+1222,17,2026-09-10,Firenze,pranzo,15.60,in attesa
+1223,73,2026-03-19,Roma,cena,20.40,approvata
+1224,29,2026-04-13,Milano,pranzo,21.70,approvata
+1225,80,2026-03-19,Brescia,treno,34.30,approvata
+1226,67,2026-04-29,Roma,treno,121.40,approvata
+1227,71,2026-04-22,Verona,pranzo,17.50,approvata
+1228,26,2026-03-09,Torino,cena,26.60,approvata
+1229,30,2026-08-28,Milano,treno,20.10,in attesa
+1230,87,2026-03-10,Trento,hotel,100.00,approvata
+1231,75,2026-08-04,Brescia,km,124.00,in attesa
+1232,22,2026-08-26,Bologna,hotel,80.00,in attesa
+1233,30,2026-04-23,Firenze,pranzo,14.10,approvata
+1234,31,2026-05-15,Bergamo,treno,15.80,approvata
+1235,92,2026-02-18,Firenze,pranzo,12.50,respinta
+1236,79,2026-09-02,Venezia,pranzo,17.90,in attesa
+1237,68,2026-02-11,Roma,hotel,106.00,approvata
+1238,75,2026-08-04,Brescia,cena,19.00,in attesa
+1239,29,2026-06-10,Padova,treno,37.20,approvata
+1240,68,2026-04-28,Trento,hotel,79.00,approvata
+1241,91,2026-09-03,Genova,pranzo,18.60,approvata
+1242,17,2026-07-27,Bologna,km,177.60,approvata
+1243,47,2026-08-18,Roma,hotel,112.00,approvata
+1244,79,2026-07-20,Venezia,treno,9.00,approvata
+1245,68,2026-02-11,Roma,treno,116.70,approvata
+1246,23,2026-02-18,Milano,km,79.20,approvata
+1247,87,2026-02-23,Milano,km,84.00,approvata
+1248,30,2026-08-28,Milano,pranzo,23.90,in attesa
+1249,114,2026-08-03,Genova,treno,55.00,approvata
+1250,114,2026-06-16,Roma,pranzo,23.70,approvata
+1251,108,2026-04-21,Roma,pranzo,17.60,approvata
+1252,17,2026-07-29,Bologna,pranzo,17.30,approvata
+1253,104,2026-04-09,Brescia,cena,19.00,approvata
+1254,29,2026-06-10,Padova,hotel,84.00,approvata
+1255,67,2026-04-29,Roma,pranzo,11.60,approvata
+1256,79,2026-01-13,Roma,cena,18.20,approvata
+1257,26,2026-01-27,Milano,km,76.80,approvata
+1258,68,2026-08-05,Verona,pranzo,12.60,approvata
+1259,23,2026-06-26,Milano,km,77.60,respinta
+1260,79,2026-01-14,Roma,pranzo,21.70,approvata
+1261,44,2026-05-11,Bologna,treno,28.40,approvata
+1262,23,2026-06-22,Roma,cena,20.20,approvata
+1263,68,2026-06-18,Roma,hotel,120.00,approvata
+1264,26,2026-06-15,Bergamo,treno,16.50,approvata
+1265,67,2026-04-29,Roma,hotel,113.00,approvata
+1266,80,2026-03-19,Brescia,pranzo,16.90,approvata
+1267,23,2026-06-10,Milano,pranzo,19.50,approvata
+1268,26,2026-06-24,Roma,hotel,137.00,approvata
+1269,108,2026-04-20,Roma,cena,19.40,approvata
+1270,23,2026-02-19,Firenze,hotel,100.00,approvata
+1271,68,2026-01-15,Roma,hotel,123.00,approvata
+1272,23,2026-07-15,Milano,treno,31.80,approvata
+1273,68,2026-03-19,Milano,pranzo,20.30,approvata
+1274,2,2026-06-17,Treviso,km,44.80,approvata
+1275,26,2026-01-27,Milano,pranzo,13.70,approvata
+1276,23,2026-02-24,Padova,treno,41.80,approvata
+1277,87,2026-09-15,Milano,km,84.00,in attesa
+1278,2,2026-09-15,Bologna,treno,33.10,in attesa
+1279,68,2026-06-01,Milano,treno,28.10,approvata
+1280,61,2026-04-09,Brescia,cena,20.00,approvata
+1281,68,2026-08-05,Verona,km,60.80,approvata
+1282,73,2026-03-19,Roma,pranzo,14.50,approvata
+1283,102,2026-05-18,Milano,km,78.40,approvata
+1284,116,2026-03-27,Genova,pranzo,14.10,approvata
+1285,31,2026-05-15,Bergamo,pranzo,19.50,approvata
+1286,23,2026-07-15,Milano,hotel,142.00,approvata
+1287,91,2026-03-04,Verona,pranzo,9.50,approvata
+1288,26,2026-03-09,Torino,pranzo,18.60,approvata
+1289,23,2026-02-18,Milano,pranzo,23.10,approvata
+1290,44,2026-05-11,Bologna,cena,19.90,approvata
+1291,79,2026-06-25,Roma,cena,22.60,respinta
+1292,26,2026-07-31,Verona,treno,14.50,approvata
+1293,23,2026-01-21,Firenze,cena,15.40,approvata
+1294,68,2026-04-28,Trento,treno,26.30,approvata
+1295,26,2026-07-06,Milano,pranzo,15.00,approvata
+1296,68,2026-02-11,Roma,pranzo,13.70,approvata
+1297,22,2026-08-27,Bologna,pranzo,15.10,in attesa
+1298,26,2026-03-09,Torino,km,197.60,approvata
+1299,57,2026-09-16,Milano,pranzo,17.60,in attesa
+1300,114,2026-08-03,Genova,pranzo,10.40,approvata
+1301,98,2026-05-20,Padova,km,125.60,approvata
+1302,17,2026-09-10,Firenze,hotel,99.00,in attesa
+1303,29,2026-05-12,Roma,hotel,114.00,approvata
+1304,23,2026-02-19,Firenze,cena,17.10,approvata
+1305,17,2026-07-27,Bologna,hotel,77.00,approvata
+1306,98,2026-05-20,Padova,pranzo,11.00,approvata
+1307,102,2026-05-15,Genova,pranzo,15.20,approvata
+1308,87,2026-03-04,Roma,pranzo,17.60,approvata
+1309,55,2026-03-06,Milano,treno,29.40,approvata
+1310,99,2026-01-16,Bologna,treno,34.70,approvata
+1311,102,2026-03-16,Torino,pranzo,12.50,approvata
+1312,114,2026-04-15,Bergamo,pranzo,15.00,respinta
+1313,29,2026-05-12,Roma,pranzo,15.00,approvata
+1314,79,2026-08-12,Milano,km,198.40,approvata
+1315,61,2026-04-09,Brescia,pranzo,18.50,approvata
+1316,23,2026-03-26,Trento,pranzo,13.80,approvata
+1317,17,2026-07-28,Bologna,hotel,90.00,approvata
+1318,23,2026-06-22,Roma,hotel,143.00,approvata
+1319,91,2026-02-05,Milano,pranzo,22.20,approvata
+1320,91,2026-07-16,Bergamo,km,44.80,approvata
+1321,73,2026-03-19,Roma,hotel,132.00,approvata
+1322,30,2026-06-22,Padova,pranzo,12.10,approvata
+1323,68,2026-06-01,Milano,pranzo,24.10,approvata
+1324,101,2026-03-26,Roma,treno,142.80,approvata
+1325,104,2026-04-08,Brescia,cena,27.70,approvata
+1326,29,2026-04-13,Milano,treno,25.70,approvata
+1327,102,2026-02-03,Verona,treno,19.90,approvata
+1328,61,2026-04-09,Brescia,hotel,100.00,approvata
+1329,30,2026-04-23,Firenze,hotel,74.00,approvata
+1330,57,2026-05-13,Brescia,km,123.20,approvata
+1331,44,2026-05-11,Bologna,hotel,100.00,approvata
+1332,68,2026-04-09,Torino,cena,16.20,approvata
+1333,23,2026-03-26,Trento,hotel,95.00,approvata
+1334,61,2026-07-08,Venezia,pranzo,12.30,in attesa
+1335,91,2026-02-17,Padova,hotel,100.00,approvata
+1336,68,2026-04-15,Trento,treno,34.40,approvata
+1337,87,2026-03-26,Trento,pranzo,13.10,approvata
+1338,29,2026-06-10,Padova,cena,19.00,approvata
+1339,30,2026-06-24,Padova,pranzo,17.30,approvata
+1340,26,2026-07-16,Milano,treno,29.80,approvata
+1341,98,2026-05-20,Padova,cena,19.90,approvata
+1342,91,2026-06-05,Milano,pranzo,16.90,approvata
+1343,79,2026-06-24,Roma,hotel,143.00,respinta
+1344,85,2026-09-03,Roma,pranzo,22.50,in attesa
+1345,87,2026-03-10,Trento,treno,23.70,approvata
+1346,30,2026-08-04,Milano,pranzo,17.80,approvata
+1347,91,2026-09-03,Genova,treno,60.90,approvata
+1348,68,2026-04-09,Torino,hotel,79.00,approvata
+1349,100,2026-05-20,Verona,pranzo,13.80,approvata
+1350,61,2026-04-09,Brescia,km,122.40,approvata
+1351,68,2026-05-26,Bergamo,pranzo,10.20,approvata
+1352,114,2026-04-15,Bergamo,treno,15.90,approvata
+1353,44,2026-05-12,Bologna,cena,29.10,approvata
+1354,44,2026-05-12,Bologna,pranzo,11.60,approvata
+1355,101,2026-03-26,Roma,cena,22.50,approvata
+1356,108,2026-04-20,Roma,treno,130.50,approvata
+1357,91,2026-02-17,Padova,cena,15.60,approvata
+1358,17,2026-09-10,Firenze,treno,89.00,in attesa
+1359,30,2026-08-12,Milano,pranzo,16.80,approvata
+1360,57,2026-03-05,Venezia,pranzo,12.70,approvata
+1361,17,2026-01-27,Verona,km,60.00,approvata
+1362,61,2026-04-10,Brescia,pranzo,11.90,approvata
+1363,26,2026-08-13,Bergamo,pranzo,18.30,in attesa
+1364,68,2026-04-09,Torino,treno,55.30,approvata
+1365,73,2026-04-23,Milano,treno,20.10,approvata
+1366,73,2026-02-18,Torino,treno,64.90,approvata
+1367,92,2026-02-17,Firenze,hotel,94.00,respinta
+1368,87,2026-03-05,Roma,pranzo,11.50,approvata
+1369,36,2026-06-05,Milano,pranzo,12.60,approvata
+1370,91,2026-05-21,Milano,treno,27.40,approvata
+1371,79,2026-01-13,Roma,hotel,94.00,approvata
+1372,79,2026-01-13,Roma,treno,117.00,approvata
+1373,17,2026-07-28,Bologna,pranzo,14.30,approvata
+1374,23,2026-02-19,Firenze,pranzo,17.40,approvata
+1375,104,2026-08-20,Treviso,treno,16.90,in attesa
+1376,68,2026-07-20,Milano,km,78.40,approvata
+1377,26,2026-01-28,Milano,treno,25.00,approvata
+1378,26,2026-03-11,Torino,pranzo,11.20,approvata
+1379,102,2026-03-03,Bergamo,pranzo,15.30,approvata
+1380,29,2026-05-12,Roma,treno,167.60,approvata
+1381,23,2026-07-15,Milano,pranzo,22.00,approvata
+1382,68,2026-07-03,Padova,pranzo,11.40,in attesa
+1383,30,2026-04-24,Firenze,pranzo,13.50,approvata
+1384,26,2026-07-31,Verona,pranzo,14.30,approvata
+1385,55,2026-09-18,Trento,pranzo,18.40,in attesa
+1386,17,2026-01-27,Verona,pranzo,18.80,approvata
+1387,102,2026-05-14,Genova,cena,26.00,approvata
+1388,91,2026-09-03,Genova,hotel,87.00,approvata
+1389,26,2026-03-12,Milano,pranzo,11.60,approvata
+1390,116,2026-03-27,Genova,treno,52.30,approvata
+1391,102,2026-03-03,Bergamo,km,45.60,approvata
+1392,26,2026-03-31,Milano,km,78.40,approvata
+1393,79,2026-01-13,Roma,pranzo,21.50,approvata
+1394,102,2026-07-27,Torino,treno,66.50,approvata
+1395,104,2026-08-20,Treviso,pranzo,12.70,in attesa
+1396,87,2026-02-23,Milano,pranzo,21.30,approvata
+1397,91,2026-03-04,Verona,treno,19.50,approvata
+1398,79,2026-08-19,Brescia,pranzo,14.60,in attesa
+1399,91,2026-07-21,Bergamo,km,45.60,in attesa
+1400,23,2026-03-26,Trento,km,92.80,approvata
+1401,108,2026-06-16,Torino,treno,47.20,approvata
