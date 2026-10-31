@@ -1,0 +1,523 @@
+id,titolo,autore,genere,anno,sede,tipo,copie
+1,L'imperatore del male,"Mukherjee, Siddhartha",scienze,2010,Centrale,libro,1
+2,"Armi, acciaio e malattie","Diamond, Jared",saggistica,1997,Centrale,libro,2
+3,La forma dell'acqua,"Camilleri, Andrea",gialli,1994,Borgo Nuovo,libro,1
+4,Norwegian Wood,"Murakami, Haruki",narrativa straniera,1987,Borgo Nuovo,libro,1
+5,Coco,"Unkrich, Lee",animazione,2017,Centrale,dvd,1
+6,Americanah,"Adichie, Chimamanda Ngozi",narrativa straniera,2013,San Rocco,libro,2
+7,Le voci della sera,"Ginzburg, Natalia",narrativa italiana,1961,Centrale,libro,1
+8,La leggenda dei monti naviganti,"Rumiz, Paolo",viaggi,2007,Borgo Nuovo,libro,1
+9,Qualcuno con cui correre,"Grossman, David",narrativa straniera,2000,San Rocco,libro,1
+10,Il sistema periodico,"Levi, Primo",narrativa italiana,1975,Centrale,libro,1
+11,La fattoria degli animali,"Orwell, George",narrativa straniera,1945,Centrale,libro,1
+12,Sette brevi lezioni di fisica,"Rovelli, Carlo",scienze,2014,Centrale,libro,1
+13,Cosmo,"Sagan, Carl",scienze,1980,Centrale,libro,1
+14,1Q84,"Murakami, Haruki",narrativa straniera,2009,Centrale,libro,2
+15,Fondazione,"Asimov, Isaac",fantascienza e fantasy,1951,Centrale,libro,1
+16,Storia della bambina perduta,"Ferrante, Elena",narrativa italiana,2014,Centrale,libro,1
+17,"Quattroruote, giugno 2026",,periodico,2026,Centrale,rivista,1
+18,"Casabella, gennaio 2025",,periodico,2025,Centrale,rivista,1
+19,Tutta la luce che non vediamo,"Doerr, Anthony",narrativa straniera,2014,Centrale,libro,3
+20,Sostiene Pereira,"Tabucchi, Antonio",narrativa italiana,1994,Borgo Nuovo,libro,2
+21,La montagna incantata,"Mann, Thomas",narrativa straniera,1924,San Rocco,libro,1
+22,"Casabella, marzo 2026",,periodico,2026,Centrale,rivista,1
+23,"Casabella, febbraio 2025",,periodico,2025,Centrale,rivista,1
+24,Se questo è un uomo,"Levi, Primo",narrativa italiana,1947,Borgo Nuovo,libro,1
+25,Il formaggio e i vermi,"Ginzburg, Carlo",storia,1976,Centrale,libro,2
+26,21 lezioni per il XXI secolo,"Harari, Yuval Noah",saggistica,2018,Centrale,libro,2
+27,Maus,"Spiegelman, Art",fumetti,1986,Centrale,libro,2
+28,I promessi sposi,"Manzoni, Alessandro",narrativa italiana,1840,Borgo Nuovo,libro,1
+29,"Altroconsumo, ottobre 2025",,periodico,2025,Centrale,rivista,1
+30,Il pendolo di Foucault,"Eco, Umberto",narrativa italiana,1988,Centrale,libro,1
+31,Pietr il Lettone,"Simenon, Georges",gialli,1931,Centrale,libro,1
+32,Storia d'Italia dal 1861 al 1997,"Mack Smith, Denis",storia,1997,Centrale,libro,1
+33,Nel paese dei mostri selvaggi,"Sendak, Maurice",ragazzi,1963,Centrale,libro,2
+34,Storia di chi fugge e di chi resta,"Ferrante, Elena",narrativa italiana,2013,Borgo Nuovo,libro,1
+35,Madame Bovary,"Flaubert, Gustave",narrativa straniera,1857,San Rocco,libro,3
+36,La Terra Santa,"Merini, Alda",poesia,1984,Centrale,libro,1
+37,"Linus, maggio 2025",,periodico,2025,Centrale,rivista,1
+38,Qualcuno con cui correre,"Grossman, David",narrativa straniera,2000,Borgo Nuovo,libro,1
+39,Dune,"Herbert, Frank",fantascienza e fantasy,1965,Centrale,libro,2
+40,Inside Out,"Docter, Pete",animazione,2015,Centrale,dvd,1
+41,Caos calmo,"Veronesi, Sandro",narrativa italiana,2005,Centrale,libro,1
+42,Il mare non bagna Napoli,"Ortese, Anna Maria",narrativa italiana,1953,Centrale,libro,1
+43,Almost Blue,"Lucarelli, Carlo",gialli,1997,Centrale,libro,2
+44,Il grande sonno,"Chandler, Raymond",gialli,1939,Centrale,libro,1
+45,"Focus, agosto 2025",,periodico,2025,Centrale,rivista,1
+46,Il cimitero di Praga,"Eco, Umberto",narrativa italiana,2010,Borgo Nuovo,libro,1
+47,Orgoglio e pregiudizio,"Austen, Jane",narrativa straniera,1813,Centrale,libro,1
+48,Sostiene Pereira,"Tabucchi, Antonio",narrativa italiana,1994,Centrale,libro,1
+49,Acciaio,"Avallone, Silvia",narrativa italiana,2010,Centrale,libro,3
+50,"Linus, gennaio 2025",,periodico,2025,Centrale,rivista,1
+51,L'amica geniale,"Ferrante, Elena",narrativa italiana,2011,Centrale,libro,3
+52,Roma città aperta,"Rossellini, Roberto",film,1945,Borgo Nuovo,dvd,1
+53,La pazza gioia,"Virzì, Paolo",film,2016,Centrale,dvd,1
+54,Il giro del mondo in ottanta giorni,"Verne, Jules",ragazzi,1873,San Rocco,libro,1
+55,Il giovane Holden,"Salinger, Jerome David",narrativa straniera,1951,Centrale,libro,1
+56,"Nemico, amico, amante","Munro, Alice",narrativa straniera,2001,Borgo Nuovo,libro,3
+57,Parasite,"Bong, Joon-ho",film,2019,Centrale,dvd,1
+58,Cristo si è fermato a Eboli,"Levi, Carlo",narrativa italiana,1945,Centrale,libro,2
+59,Le vie dei canti,"Chatwin, Bruce",viaggi,1987,Centrale,libro,3
+60,"Altroconsumo, febbraio 2026",,periodico,2026,Centrale,rivista,1
+61,Il sergente nella neve,"Rigoni Stern, Mario",narrativa italiana,1953,Borgo Nuovo,libro,1
+62,Una questione privata,"Fenoglio, Beppe",narrativa italiana,1963,Centrale,libro,1
+63,"Quattroruote, aprile 2025",,periodico,2025,Centrale,rivista,1
+64,La gita a Tindari,"Camilleri, Andrea",gialli,2000,Centrale,libro,3
+65,La ragazza della palude,"Owens, Delia",narrativa straniera,2018,Borgo Nuovo,libro,1
+66,Sottomissione,"Houellebecq, Michel",narrativa straniera,2015,Centrale,libro,1
+67,Il racconto dell'ancella,"Atwood, Margaret",narrativa straniera,1985,Centrale,libro,2
+68,SPQR,"Beard, Mary",storia,2015,Centrale,libro,2
+69,Il mio nome è rosso,"Pamuk, Orhan",narrativa straniera,1998,Centrale,libro,1
+70,La montagna incantata,"Mann, Thomas",narrativa straniera,1924,Centrale,libro,1
+71,I fratelli Karamazov,"Dostoevskij, Fëdor",narrativa straniera,1880,Centrale,libro,3
+72,Ratatouille,"Bird, Brad",animazione,2007,Centrale,dvd,1
+73,Il silenzio dei gelsi,"Neri, Tommaso",narrativa italiana,2025,Centrale,libro,1
+74,La verità sul caso Harry Quebert,"Dicker, Joël",gialli,2012,San Rocco,libro,1
+75,Il Gattopardo,"Visconti, Luchino",film,1963,Borgo Nuovo,dvd,1
+76,Il richiamo della foresta,"London, Jack",ragazzi,1903,Centrale,libro,3
+77,La vita bugiarda degli adulti,"Ferrante, Elena",narrativa italiana,2019,Centrale,libro,2
+78,Il buio oltre la siepe,"Lee, Harper",narrativa straniera,1960,San Rocco,libro,2
+79,Se questo è un uomo,"Levi, Primo",narrativa italiana,1947,Centrale,libro,4
+80,Una stanza a Lisbona,"Valli, Sofia",narrativa italiana,2026,Borgo Nuovo,libro,1
+81,Il profumo,"Süskind, Patrick",narrativa straniera,1985,San Rocco,libro,4
+82,Zanna Bianca,"London, Jack",ragazzi,1906,Borgo Nuovo,libro,1
+83,"Le Scienze, luglio 2025",,periodico,2025,Centrale,rivista,1
+84,Il silenzio dei gelsi,"Neri, Tommaso",narrativa italiana,2025,Borgo Nuovo,libro,1
+85,Ad occhi chiusi,"Carofiglio, Gianrico",gialli,2003,Centrale,libro,2
+86,Il talento di Mr. Ripley,"Highsmith, Patricia",gialli,1955,Centrale,libro,1
+87,Danubio,"Magris, Claudio",viaggi,1986,Borgo Nuovo,libro,3
+88,Il padrino,"Coppola, Francis Ford",film,1972,Centrale,dvd,1
+89,Mediterraneo,"Salvatores, Gabriele",film,1991,Borgo Nuovo,dvd,1
+90,Espiazione,"McEwan, Ian",narrativa straniera,2001,Centrale,libro,1
+91,Il mastino dei Baskerville,"Conan Doyle, Arthur",gialli,1902,Centrale,libro,2
+92,Dieci cose che ho imparato,"Angela, Piero",saggistica,2022,Borgo Nuovo,libro,1
+93,M. Il figlio del secolo,"Scurati, Antonio",narrativa italiana,2018,Centrale,libro,2
+94,L'ombra del vento,"Ruiz Zafón, Carlos",narrativa straniera,2001,Centrale,libro,4
+95,Il libro degli errori,"Rodari, Gianni",ragazzi,1964,Borgo Nuovo,libro,3
+96,Dracula,"Stoker, Bram",narrativa straniera,1897,Centrale,libro,2
+97,La nazione delle piante,"Mancuso, Stefano",scienze,2019,Centrale,libro,2
+98,La ragazza della palude,"Owens, Delia",narrativa straniera,2018,Centrale,libro,3
+99,Una giornata nell'antica Roma,"Angela, Alberto",storia,2007,Borgo Nuovo,libro,1
+100,Lacci,"Starnone, Domenico",narrativa italiana,2014,Borgo Nuovo,libro,2
+101,Taxi Driver,"Scorsese, Martin",film,1976,Borgo Nuovo,dvd,1
+102,"Airone, ottobre 2025",,periodico,2025,Centrale,rivista,1
+103,L'uomo dei cerchi azzurri,"Vargas, Fred",gialli,1991,Centrale,libro,2
+104,Il deserto dei Tartari,"Buzzati, Dino",narrativa italiana,1940,San Rocco,libro,4
+105,Il nome della rosa,"Eco, Umberto",narrativa italiana,1980,Borgo Nuovo,libro,1
+106,Extraterrestre alla pari,"Pitzorno, Bianca",ragazzi,1979,Centrale,libro,2
+107,La ciociara,"Moravia, Alberto",narrativa italiana,1957,San Rocco,libro,3
+108,Il cimitero di Praga,"Eco, Umberto",narrativa italiana,2010,San Rocco,libro,1
+109,Venere privata,"Scerbanenco, Giorgio",gialli,1966,Borgo Nuovo,libro,2
+110,Il mondo nuovo,"Huxley, Aldous",fantascienza e fantasy,1932,Borgo Nuovo,libro,1
+111,Americanah,"Adichie, Chimamanda Ngozi",narrativa straniera,2013,Centrale,libro,1
+112,Pista nera,"Manzini, Antonio",gialli,2013,Borgo Nuovo,libro,1
+113,Madame Bovary,"Flaubert, Gustave",narrativa straniera,1857,Centrale,libro,1
+114,Grandi speranze,"Dickens, Charles",narrativa straniera,1861,Borgo Nuovo,libro,2
+115,Con gli occhi chiusi,"Tozzi, Federigo",narrativa italiana,1919,Borgo Nuovo,libro,1
+116,Va' dove ti porta il cuore,"Tamaro, Susanna",narrativa italiana,1994,Centrale,libro,3
+117,Finzioni,"Borges, Jorge Luis",narrativa straniera,1944,Centrale,libro,2
+118,Il vecchio che leggeva romanzi d'amore,"Sepúlveda, Luis",narrativa straniera,1989,Centrale,libro,1
+119,Il lupo della steppa,"Hesse, Hermann",narrativa straniera,1927,Centrale,libro,1
+120,Seta,"Baricco, Alessandro",narrativa italiana,1996,Centrale,libro,1
+121,Il seme del piangere,"Caproni, Giorgio",poesia,1959,Centrale,libro,3
+122,Uomini e topi,"Steinbeck, John",narrativa straniera,1937,Centrale,libro,1
+123,Il GGG,"Dahl, Roald",ragazzi,1982,Centrale,libro,1
+124,Gente di Dublino,"Joyce, James",narrativa straniera,1914,Centrale,libro,1
+125,Diario di una schiappa,"Kinney, Jeff",ragazzi,2007,Centrale,libro,1
+126,Sapiens. Da animali a dèi,"Harari, Yuval Noah",saggistica,2011,Centrale,libro,2
+127,Il cane di terracotta,"Camilleri, Andrea",gialli,1996,Centrale,libro,2
+128,Ascolta il mio cuore,"Pitzorno, Bianca",ragazzi,1991,Centrale,libro,1
+129,"Linus, marzo 2026",,periodico,2026,Centrale,rivista,1
+130,Il metodo del coccodrillo,"De Giovanni, Maurizio",gialli,2012,Borgo Nuovo,libro,1
+131,Cronache marziane,"Bradbury, Ray",fantascienza e fantasy,1950,Centrale,libro,2
+132,La ciociara,"Moravia, Alberto",narrativa italiana,1957,Centrale,libro,3
+133,Le avventure di Pinocchio,"Collodi, Carlo",ragazzi,1883,Centrale,libro,2
+134,Helgoland,"Rovelli, Carlo",scienze,2020,Centrale,libro,2
+135,Pastorale americana,"Roth, Philip",narrativa straniera,1997,Centrale,libro,3
+136,Il dilemma dell'onnivoro,"Pollan, Michael",saggistica,2006,Centrale,libro,1
+137,Ladri di biciclette,"De Sica, Vittorio",film,1948,Centrale,dvd,1
+138,La storia infinita,"Ende, Michael",ragazzi,1979,Borgo Nuovo,libro,4
+139,Favole al telefono,"Rodari, Gianni",ragazzi,1962,Centrale,libro,1
+140,21 lezioni per il XXI secolo,"Harari, Yuval Noah",saggistica,2018,Borgo Nuovo,libro,1
+141,C'è ancora domani,"Cortellesi, Paola",film,2023,Borgo Nuovo,dvd,1
+142,Il Gruffalò,"Donaldson, Julia",ragazzi,1999,Borgo Nuovo,libro,1
+143,La leggenda dei monti naviganti,"Rumiz, Paolo",viaggi,2007,Centrale,libro,2
+144,"Casabella, aprile 2026",,periodico,2026,Centrale,rivista,1
+145,Il ladro di merendine,"Camilleri, Andrea",gialli,1996,Centrale,libro,1
+146,Se una notte d'inverno un viaggiatore,"Calvino, Italo",narrativa italiana,1979,Centrale,libro,1
+147,Il nome della rosa,"Eco, Umberto",narrativa italiana,1980,Centrale,libro,2
+148,L'amica geniale,"Ferrante, Elena",narrativa italiana,2011,Borgo Nuovo,libro,2
+149,Lacci,"Starnone, Domenico",narrativa italiana,2014,Centrale,libro,1
+150,Amarcord,"Fellini, Federico",film,1973,Centrale,dvd,1
+151,"Linus, agosto 2025",,periodico,2025,Centrale,rivista,1
+152,Una ballata del mare salato,"Pratt, Hugo",fumetti,1967,Centrale,libro,1
+153,Gita al faro,"Woolf, Virginia",narrativa straniera,1927,Borgo Nuovo,libro,1
+154,WALL-E,"Stanton, Andrew",animazione,2008,Centrale,dvd,1
+155,"Focus, settembre 2025",,periodico,2025,Centrale,rivista,1
+156,Il giardino dei Finzi-Contini,"Bassani, Giorgio",narrativa italiana,1962,Centrale,libro,1
+157,Jane Eyre,"Brontë, Charlotte",narrativa straniera,1847,Centrale,libro,1
+158,Il cacciatore di aquiloni,"Hosseini, Khaled",narrativa straniera,2003,Centrale,libro,2
+159,Il Gattopardo,"Tomasi di Lampedusa, Giuseppe",narrativa italiana,1958,Centrale,libro,1
+160,Neuromante,"Gibson, William",fantascienza e fantasy,1984,Centrale,libro,1
+161,"Le Scienze, agosto 2025",,periodico,2025,Centrale,rivista,1
+162,Il birraio di Preston,"Camilleri, Andrea",narrativa italiana,1995,San Rocco,libro,2
+163,Il Gattopardo,"Visconti, Luchino",film,1963,Centrale,dvd,1
+164,Il fu Mattia Pascal,"Pirandello, Luigi",narrativa italiana,1904,Centrale,libro,1
+165,Lazzaro felice,"Rohrwacher, Alice",film,2018,Borgo Nuovo,dvd,1
+166,La signora Dalloway,"Woolf, Virginia",narrativa straniera,1925,Centrale,libro,2
+167,Il ritratto di Dorian Gray,"Wilde, Oscar",narrativa straniera,1890,Centrale,libro,1
+168,No Logo,"Klein, Naomi",saggistica,1999,Centrale,libro,4
+169,L'ospite inquietante,"Galimberti, Umberto",saggistica,2007,Centrale,libro,1
+170,La Storia,"Morante, Elsa",narrativa italiana,1974,Centrale,libro,2
+171,Harry Potter e il prigioniero di Azkaban,"Rowling, J.K.",ragazzi,1999,Centrale,libro,1
+172,La casa degli spiriti,"Allende, Isabel",narrativa straniera,1982,Centrale,libro,1
+173,Due vite,"Trevi, Emanuele",narrativa italiana,2020,San Rocco,libro,1
+174,Il suggeritore,"Carrisi, Donato",gialli,2009,Centrale,libro,1
+175,2666,"Bolaño, Roberto",narrativa straniera,2004,Centrale,libro,2
+176,Il Borgo Nuovo: storia di un quartiere,"Ferretti, Luigi",storia locale,2012,Centrale,libro,1
+177,Le otto montagne,"Cognetti, Paolo",narrativa italiana,2016,Centrale,libro,1
+178,Il senso del dolore,"De Giovanni, Maurizio",gialli,2007,Centrale,libro,1
+179,Dieci piccoli indiani,"Christie, Agatha",gialli,1939,Centrale,libro,4
+180,Oliver Twist,"Dickens, Charles",narrativa straniera,1838,Borgo Nuovo,libro,1
+181,A ciascuno il suo,"Sciascia, Leonardo",narrativa italiana,1966,Centrale,libro,1
+182,Ventimila leghe sotto i mari,"Verne, Jules",ragazzi,1870,Borgo Nuovo,libro,1
+183,I miserabili,"Hugo, Victor",narrativa straniera,1862,San Rocco,libro,3
+184,Lettere contro la guerra,"Terzani, Tiziano",saggistica,2002,Centrale,libro,2
+185,"Focus, gennaio 2025",,periodico,2025,Centrale,rivista,1
+186,Harry Potter e la pietra filosofale,"Rowling, J.K.",ragazzi,1997,San Rocco,libro,1
+187,Non lasciarmi,"Ishiguro, Kazuo",narrativa straniera,2005,San Rocco,libro,1
+188,Il pettirosso,"Nesbø, Jo",gialli,2000,San Rocco,libro,2
+189,La dolce vita,"Fellini, Federico",film,1960,Centrale,dvd,1
+190,Homo Deus,"Harari, Yuval Noah",saggistica,2015,Centrale,libro,2
+191,Una vita come tante,"Yanagihara, Hanya",narrativa straniera,2015,San Rocco,libro,1
+192,Fedeltà,"Missiroli, Marco",narrativa italiana,2019,Centrale,libro,2
+193,1984,"Orwell, George",narrativa straniera,1949,Centrale,libro,1
+194,Vita,"Mazzucco, Melania G.",narrativa italiana,2003,Centrale,libro,1
+195,Kafka sulla spiaggia,"Murakami, Haruki",narrativa straniera,2002,Centrale,libro,2
+196,Una guerra civile,"Pavone, Claudio",storia,1991,Centrale,libro,1
+197,Cecità,"Saramago, José",narrativa straniera,1995,Centrale,libro,1
+198,Venere privata,"Scerbanenco, Giorgio",gialli,1966,Centrale,libro,1
+199,Primavera silenziosa,"Carson, Rachel",scienze,1962,Centrale,libro,2
+200,Menzogna e sortilegio,"Morante, Elsa",narrativa italiana,1948,San Rocco,libro,2
+201,L'Arminuta,"Di Pietrantonio, Donatella",narrativa italiana,2017,Centrale,libro,1
+202,"Quattroruote, marzo 2026",,periodico,2026,Centrale,rivista,1
+203,E.T. l'extra-terrestre,"Spielberg, Steven",film,1982,Centrale,dvd,1
+204,Maus,"Spiegelman, Art",fumetti,1986,Borgo Nuovo,libro,1
+205,L'arte della gioia,"Sapienza, Goliarda",narrativa italiana,1998,Centrale,libro,2
+206,La mano sinistra delle tenebre,"Le Guin, Ursula K.",fantascienza e fantasy,1969,Centrale,libro,1
+207,La verità sul caso Harry Quebert,"Dicker, Joël",gialli,2012,Centrale,libro,2
+208,Senilità,"Svevo, Italo",narrativa italiana,1898,Centrale,libro,1
+209,Il Signore degli Anelli,"Tolkien, J.R.R.",fantascienza e fantasy,1954,Centrale,libro,1
+210,Lo straniero,"Camus, Albert",narrativa straniera,1942,Centrale,libro,1
+211,Gli anni,"Ernaux, Annie",narrativa straniera,2008,San Rocco,libro,1
+212,L'allegria,"Ungaretti, Giuseppe",poesia,1931,Centrale,libro,2
+213,"Le Scienze, febbraio 2026",,periodico,2026,Centrale,rivista,1
+214,L'insostenibile leggerezza dell'essere,"Kundera, Milan",narrativa straniera,1984,Borgo Nuovo,libro,1
+215,Il libro dell'inquietudine,"Pessoa, Fernando",narrativa straniera,1982,Centrale,libro,1
+216,Il talento di Mr. Ripley,"Highsmith, Patricia",gialli,1955,Borgo Nuovo,libro,2
+217,La gioia di scrivere,"Szymborska, Wisława",poesia,2009,Centrale,libro,4
+218,"Airone, maggio 2026",,periodico,2026,Centrale,rivista,1
+219,Elogio dell'imperfezione,"Levi-Montalcini, Rita",saggistica,1987,Centrale,libro,1
+220,Il processo,"Kafka, Franz",narrativa straniera,1925,Centrale,libro,2
+221,Oliver Twist,"Dickens, Charles",narrativa straniera,1838,Centrale,libro,1
+222,Fahrenheit 451,"Bradbury, Ray",fantascienza e fantasy,1953,Centrale,libro,1
+223,Quer pasticciaccio brutto de via Merulana,"Gadda, Carlo Emilio",narrativa italiana,1957,Centrale,libro,3
+224,Marcovaldo,"Calvino, Italo",narrativa italiana,1963,Borgo Nuovo,libro,1
+225,Venti poesie d'amore e una canzone disperata,"Neruda, Pablo",poesia,1924,Centrale,libro,1
+226,Addio alle armi,"Hemingway, Ernest",narrativa straniera,1929,Centrale,libro,1
+227,Caro diario,"Moretti, Nanni",film,1993,Borgo Nuovo,dvd,1
+228,Interstellar,"Nolan, Christopher",film,2014,Centrale,dvd,1
+229,It,"King, Stephen",narrativa straniera,1986,San Rocco,libro,2
+230,Contengo moltitudini,"Yong, Ed",scienze,2016,Centrale,libro,1
+231,"Le Scienze, gennaio 2026",,periodico,2026,Centrale,rivista,1
+232,Il birraio di Preston,"Camilleri, Andrea",narrativa italiana,1995,Borgo Nuovo,libro,2
+233,Il grande Gatsby,"Fitzgerald, Francis Scott",narrativa straniera,1925,Centrale,libro,1
+234,La casa in collina,"Pavese, Cesare",narrativa italiana,1948,Centrale,libro,1
+235,"Io, robot","Asimov, Isaac",fantascienza e fantasy,1950,San Rocco,libro,1
+236,Ossi di seppia,"Montale, Eugenio",poesia,1925,Centrale,libro,2
+237,Il partigiano Johnny,"Fenoglio, Beppe",narrativa italiana,1968,Centrale,libro,1
+238,La fabbrica di cioccolato,"Dahl, Roald",ragazzi,1964,San Rocco,libro,1
+239,La peste,"Camus, Albert",narrativa straniera,1947,Centrale,libro,1
+240,Cronaca di una morte annunciata,"García Márquez, Gabriel",narrativa straniera,1981,Borgo Nuovo,libro,2
+241,Pensieri lenti e veloci,"Kahneman, Daniel",saggistica,2011,Borgo Nuovo,libro,1
+242,Dal big bang ai buchi neri,"Hawking, Stephen",scienze,1988,Centrale,libro,1
+243,Cime tempestose,"Brontë, Emily",narrativa straniera,1847,Borgo Nuovo,libro,1
+244,Il deserto dei Tartari,"Buzzati, Dino",narrativa italiana,1940,Centrale,libro,1
+245,L'uomo di Marte,"Weir, Andy",fantascienza e fantasy,2011,Centrale,libro,1
+246,"National Geographic Italia, maggio 2026",,periodico,2026,Centrale,rivista,1
+247,Il cane giallo,"Simenon, Georges",gialli,1931,San Rocco,libro,1
+248,L'arte della gioia,"Sapienza, Goliarda",narrativa italiana,1998,Borgo Nuovo,libro,2
+249,Le città invisibili,"Calvino, Italo",narrativa italiana,1972,Centrale,libro,2
+250,Il libro dell'inquietudine,"Pessoa, Fernando",narrativa straniera,1982,San Rocco,libro,1
+251,Il crollo,"Achebe, Chinua",narrativa straniera,1958,Centrale,libro,1
+252,Pastorale americana,"Roth, Philip",narrativa straniera,1997,San Rocco,libro,1
+253,Una vita come tante,"Yanagihara, Hanya",narrativa straniera,2015,Centrale,libro,2
+254,Asterix il gallico,"Goscinny, René",fumetti,1961,Centrale,libro,2
+255,Marcovaldo,"Calvino, Italo",narrativa italiana,1963,Centrale,libro,2
+256,L'ordine del tempo,"Rovelli, Carlo",scienze,2017,Centrale,libro,1
+257,Il piccolo bruco Maisazio,"Carle, Eric",ragazzi,1969,Centrale,libro,1
+258,Matilde,"Dahl, Roald",ragazzi,1988,Borgo Nuovo,libro,1
+259,I promessi sposi,"Manzoni, Alessandro",narrativa italiana,1840,San Rocco,libro,1
+260,Spillover,"Quammen, David",scienze,2012,Centrale,libro,1
+261,Storia del nuovo cognome,"Ferrante, Elena",narrativa italiana,2012,Borgo Nuovo,libro,1
+262,C'è ancora domani,"Cortellesi, Paola",film,2023,Centrale,dvd,1
+263,L'amica geniale,"Ferrante, Elena",narrativa italiana,2011,San Rocco,libro,1
+264,Persepolis,"Satrapi, Marjane",fumetti,2000,Centrale,libro,3
+265,Gita al faro,"Woolf, Virginia",narrativa straniera,1927,Centrale,libro,1
+266,Il metodo del coccodrillo,"De Giovanni, Maurizio",gialli,2012,Centrale,libro,2
+267,Il racconto dell'ancella,"Atwood, Margaret",narrativa straniera,1985,Borgo Nuovo,libro,1
+268,Il grande Gatsby,"Fitzgerald, Francis Scott",narrativa straniera,1925,Borgo Nuovo,libro,2
+269,La forma dell'acqua,"Camilleri, Andrea",gialli,1994,Centrale,libro,1
+270,Ratatouille,"Bird, Brad",animazione,2007,Borgo Nuovo,dvd,1
+271,Apologia della storia,"Bloch, Marc",storia,1949,Centrale,libro,4
+272,La bussola d'oro,"Pullman, Philip",ragazzi,1995,Borgo Nuovo,libro,2
+273,Il sergente nella neve,"Rigoni Stern, Mario",narrativa italiana,1953,Centrale,libro,1
+274,Finzioni,"Borges, Jorge Luis",narrativa straniera,1944,Borgo Nuovo,libro,2
+275,22/11/'63,"King, Stephen",narrativa straniera,2011,Centrale,libro,1
+276,Harry Potter e la pietra filosofale,"Rowling, J.K.",ragazzi,1997,Centrale,libro,1
+277,Gomorra,"Saviano, Roberto",saggistica,2006,Centrale,libro,2
+278,Watchmen,"Moore, Alan",fumetti,1987,Centrale,libro,1
+279,Fontamara,"Silone, Ignazio",narrativa italiana,1933,Centrale,libro,1
+280,La luna e i falò,"Pavese, Cesare",narrativa italiana,1950,Centrale,libro,2
+281,Il Gruffalò,"Donaldson, Julia",ragazzi,1999,San Rocco,libro,2
+282,Accabadora,"Murgia, Michela",narrativa italiana,2009,Centrale,libro,1
+283,Pride and Prejudice,"Austen, Jane",narrativa in lingua originale,1813,Centrale,libro,2
+284,L'uomo che scambiò sua moglie per un cappello,"Sacks, Oliver",scienze,1985,Centrale,libro,1
+285,Olive Kitteridge,"Strout, Elizabeth",narrativa straniera,2008,Centrale,libro,1
+286,Klara e il Sole,"Ishiguro, Kazuo",narrativa straniera,2021,Centrale,libro,2
+287,Il giro del mondo in ottanta giorni,"Verne, Jules",ragazzi,1873,Centrale,libro,1
+288,Come Dio comanda,"Ammaniti, Niccolò",narrativa italiana,2006,Centrale,libro,2
+289,Dante,"Barbero, Alessandro",storia,2020,Centrale,libro,1
+290,Danubio,"Magris, Claudio",viaggi,1986,Centrale,libro,1
+291,Novecento,"Baricco, Alessandro",narrativa italiana,1994,Borgo Nuovo,libro,1
+292,L'isola di Arturo,"Morante, Elsa",narrativa italiana,1957,Centrale,libro,1
+293,Caos calmo,"Veronesi, Sandro",narrativa italiana,2005,San Rocco,libro,1
+294,Cien años de soledad,"García Márquez, Gabriel",narrativa in lingua originale,1967,Centrale,libro,3
+295,La metamorfosi,"Kafka, Franz",narrativa straniera,1915,Centrale,libro,2
+296,Non ti muovere,"Mazzantini, Margaret",narrativa italiana,2001,Centrale,libro,3
+297,La vita segreta degli alberi,"Wohlleben, Peter",scienze,2015,Borgo Nuovo,libro,1
+298,Canne al vento,"Deledda, Grazia",narrativa italiana,1913,San Rocco,libro,1
+299,La verità sul caso Harry Quebert,"Dicker, Joël",gialli,2012,Borgo Nuovo,libro,1
+300,La banalità del male,"Arendt, Hannah",saggistica,1963,Centrale,libro,1
+301,La ragazza con la Leica,"Janeczek, Helena",narrativa italiana,2017,Centrale,libro,1
+302,Dante,"Barbero, Alessandro",storia,2020,Borgo Nuovo,libro,1
+303,"Altroconsumo, marzo 2025",,periodico,2025,Centrale,rivista,1
+304,Anna,"Ammaniti, Niccolò",narrativa italiana,2015,Centrale,libro,1
+305,"Uno, nessuno e centomila","Pirandello, Luigi",narrativa italiana,1926,Centrale,libro,2
+306,Mediterraneo,"Salvatores, Gabriele",film,1991,Centrale,dvd,1
+307,Wonder,"Palacio, R.J.",ragazzi,2012,Centrale,libro,1
+308,Pista nera,"Manzini, Antonio",gialli,2013,Centrale,libro,3
+309,Come si fa una tesi di laurea,"Eco, Umberto",saggistica,1977,Centrale,libro,2
+310,"Armi, acciaio e malattie","Diamond, Jared",saggistica,1997,Borgo Nuovo,libro,1
+311,Storia del nuovo cognome,"Ferrante, Elena",narrativa italiana,2012,Centrale,libro,2
+312,Grandi speranze,"Dickens, Charles",narrativa straniera,1861,San Rocco,libro,2
+313,La dolce vita,"Fellini, Federico",film,1960,Borgo Nuovo,dvd,1
+314,Pista nera,"Manzini, Antonio",gialli,2013,San Rocco,libro,3
+315,A riveder le stelle,"Cazzullo, Aldo",storia,2020,Centrale,libro,1
+316,Seta,"Baricco, Alessandro",narrativa italiana,1996,San Rocco,libro,1
+317,Alice nel paese delle meraviglie,"Carroll, Lewis",ragazzi,1865,Centrale,libro,1
+318,Notturno indiano,"Tabucchi, Antonio",narrativa italiana,1984,Centrale,libro,2
+319,Valdoria dalle origini al Novecento,"Bertolini, Aldo",storia locale,1987,Centrale,libro,2
+320,Il problema dei tre corpi,"Liu, Cixin",fantascienza e fantasy,2008,Centrale,libro,3
+321,Il GGG,"Dahl, Roald",ragazzi,1982,Borgo Nuovo,libro,1
+322,Momo,"Ende, Michael",ragazzi,1973,Centrale,libro,1
+323,La pazza gioia,"Virzì, Paolo",film,2016,Borgo Nuovo,dvd,1
+324,Storia d'Italia dal dopoguerra a oggi,"Ginsborg, Paul",storia,1989,Centrale,libro,3
+325,Il talento di Mr. Ripley,"Highsmith, Patricia",gialli,1955,San Rocco,libro,1
+326,L'alchimista,"Coelho, Paulo",narrativa straniera,1988,Centrale,libro,1
+327,Lolita,"Nabokov, Vladimir",narrativa straniera,1955,Centrale,libro,2
+328,Guerra e pace,"Tolstoj, Lev",narrativa straniera,1869,Borgo Nuovo,libro,1
+329,Margherita Dolcevita,"Benni, Stefano",narrativa italiana,2005,Centrale,libro,1
+330,Lazzaro felice,"Rohrwacher, Alice",film,2018,Centrale,dvd,1
+331,La biblioteca di mezzanotte,"Haig, Matt",narrativa straniera,2020,Centrale,libro,3
+332,L'universo elegante,"Greene, Brian",scienze,1999,Centrale,libro,1
+333,Espiazione,"McEwan, Ian",narrativa straniera,2001,San Rocco,libro,1
+334,Piccolo blu e piccolo giallo,"Lionni, Leo",ragazzi,1959,Borgo Nuovo,libro,1
+335,Il colibrì,"Veronesi, Sandro",narrativa italiana,2019,Centrale,libro,2
+336,Extraterrestre alla pari,"Pitzorno, Bianca",ragazzi,1979,Borgo Nuovo,libro,1
+337,L'insostenibile leggerezza dell'essere,"Kundera, Milan",narrativa straniera,1984,Centrale,libro,2
+338,Vita,"Mazzucco, Melania G.",narrativa italiana,2003,Borgo Nuovo,libro,1
+339,Dracula,"Stoker, Bram",narrativa straniera,1897,Borgo Nuovo,libro,1
+340,Le correzioni,"Franzen, Jonathan",narrativa straniera,2001,Centrale,libro,1
+341,L'assassinio di Roger Ackroyd,"Christie, Agatha",gialli,1926,San Rocco,libro,1
+342,"Altroconsumo, marzo 2026",,periodico,2026,Centrale,rivista,1
+343,Caro Michele,"Ginzburg, Natalia",narrativa italiana,1973,Centrale,libro,3
+344,Numero zero,"Eco, Umberto",narrativa italiana,2015,Borgo Nuovo,libro,1
+345,Il Maestro e Margherita,"Bulgakov, Michail",narrativa straniera,1967,Centrale,libro,1
+346,Il capitale nel XXI secolo,"Piketty, Thomas",saggistica,2013,Centrale,libro,1
+347,Il seme del piangere,"Caproni, Giorgio",poesia,1959,Borgo Nuovo,libro,2
+348,"Sta scherzando, Mr. Feynman!","Feynman, Richard P.",scienze,1985,Borgo Nuovo,libro,3
+349,La briscola in cinque,"Malvaldi, Marco",gialli,2007,Centrale,libro,1
+350,La scienza in cucina e l'arte di mangiar bene,"Artusi, Pellegrino",cucina,1891,Borgo Nuovo,libro,3
+351,Il ritratto di Dorian Gray,"Wilde, Oscar",narrativa straniera,1890,San Rocco,libro,1
+352,Shining,"King, Stephen",narrativa straniera,1977,Centrale,libro,3
+353,Con le peggiori intenzioni,"Piperno, Alessandro",narrativa italiana,2005,Borgo Nuovo,libro,1
+354,Taxi Driver,"Scorsese, Martin",film,1976,Centrale,dvd,1
+355,Zanna Bianca,"London, Jack",ragazzi,1906,Centrale,libro,2
+356,La storia infinita,"Ende, Michael",ragazzi,1979,Centrale,libro,1
+357,Una passeggiata nei boschi,"Bryson, Bill",viaggi,1998,Centrale,libro,3
+358,"Airone, marzo 2026",,periodico,2026,Centrale,rivista,1
+359,Nuovo Cinema Paradiso,"Tornatore, Giuseppe",film,1988,Centrale,dvd,1
+360,Suite francese,"Némirovsky, Irène",narrativa straniera,2004,San Rocco,libro,1
+361,Canti,"Leopardi, Giacomo",poesia,1835,Centrale,libro,2
+362,Ragazzi di vita,"Pasolini, Pier Paolo",narrativa italiana,1955,Centrale,libro,1
+363,Il birraio di Preston,"Camilleri, Andrea",narrativa italiana,1995,Centrale,libro,1
+364,Qualcuno con cui correre,"Grossman, David",narrativa straniera,2000,Centrale,libro,1
+365,La civiltà dell'Occidente medievale,"Le Goff, Jacques",storia,1964,Centrale,libro,2
+366,La coscienza di Zeno,"Svevo, Italo",narrativa italiana,1923,Centrale,libro,1
+367,Assassinio sull'Orient Express,"Christie, Agatha",gialli,1934,San Rocco,libro,1
+368,Il giardino dei Finzi-Contini,"Bassani, Giorgio",narrativa italiana,1962,San Rocco,libro,1
+369,Don Chisciotte della Mancia,"Cervantes, Miguel de",narrativa straniera,1605,Borgo Nuovo,libro,2
+370,Il complesso di Telemaco,"Recalcati, Massimo",saggistica,2013,Centrale,libro,2
+371,La chiave a stella,"Levi, Primo",narrativa italiana,1978,Centrale,libro,1
+372,Amatissima,"Morrison, Toni",narrativa straniera,1987,Centrale,libro,2
+373,L'isola del tesoro,"Stevenson, Robert Louis",ragazzi,1883,Centrale,libro,2
+374,Modernità liquida,"Bauman, Zygmunt",saggistica,2000,Centrale,libro,1
+375,Pippi Calzelunghe,"Lindgren, Astrid",ragazzi,1945,Centrale,libro,2
+376,In Patagonia,"Chatwin, Bruce",viaggi,1977,Centrale,libro,3
+377,Storia di chi fugge e di chi resta,"Ferrante, Elena",narrativa italiana,2013,Centrale,libro,1
+378,Todo modo,"Sciascia, Leonardo",narrativa italiana,1974,San Rocco,libro,2
+379,Die Verwandlung,"Kafka, Franz",narrativa in lingua originale,1915,Centrale,libro,2
+380,Nineteen Eighty-Four,"Orwell, George",narrativa in lingua originale,1949,Centrale,libro,2
+381,L'amore ai tempi del colera,"García Márquez, Gabriel",narrativa straniera,1985,Centrale,libro,1
+382,Assassinio sull'Orient Express,"Christie, Agatha",gialli,1934,Centrale,libro,2
+383,Il Gattopardo,"Tomasi di Lampedusa, Giuseppe",narrativa italiana,1958,San Rocco,libro,1
+384,Persone normali,"Rooney, Sally",narrativa straniera,2018,Borgo Nuovo,libro,1
+385,Le otto montagne,"Cognetti, Paolo",narrativa italiana,2016,San Rocco,libro,1
+386,Fun Home,"Bechdel, Alison",fumetti,2006,Centrale,libro,1
+387,Il profumo,"Süskind, Patrick",narrativa straniera,1985,Centrale,libro,2
+388,M. Il figlio del secolo,"Scurati, Antonio",narrativa italiana,2018,Borgo Nuovo,libro,1
+389,La coscienza di Zeno,"Svevo, Italo",narrativa italiana,1923,San Rocco,libro,2
+390,Guerra e pace,"Tolstoj, Lev",narrativa straniera,1869,Centrale,libro,1
+391,Canti,"Leopardi, Giacomo",poesia,1835,Borgo Nuovo,libro,1
+392,La Divina Commedia,"Alighieri, Dante",poesia,1321,Centrale,libro,2
+393,Perfect Days,"Wenders, Wim",film,2023,Borgo Nuovo,dvd,1
+394,Testimone inconsapevole,"Carofiglio, Gianrico",gialli,2002,San Rocco,libro,1
+395,Oceano mare,"Baricco, Alessandro",narrativa italiana,1993,Centrale,libro,1
+396,Sessanta racconti,"Buzzati, Dino",narrativa italiana,1958,Centrale,libro,3
+397,Anna Karenina,"Tolstoj, Lev",narrativa straniera,1877,Borgo Nuovo,libro,1
+398,Extraterrestre alla pari,"Pitzorno, Bianca",ragazzi,1979,San Rocco,libro,1
+399,Normal People,"Rooney, Sally",narrativa in lingua originale,2018,Centrale,libro,1
+400,Un anno sull'altipiano,"Lussu, Emilio",narrativa italiana,1938,Borgo Nuovo,libro,3
+401,La noia,"Moravia, Alberto",narrativa italiana,1960,San Rocco,libro,2
+402,Il giorno della civetta,"Sciascia, Leonardo",narrativa italiana,1961,Centrale,libro,1
+403,Bar Sport,"Benni, Stefano",narrativa italiana,1976,Borgo Nuovo,libro,2
+404,Lessico famigliare,"Ginzburg, Natalia",narrativa italiana,1963,Centrale,libro,1
+405,Una stanza a Lisbona,"Valli, Sofia",narrativa italiana,2026,San Rocco,libro,1
+406,Una vita violenta,"Pasolini, Pier Paolo",narrativa italiana,1959,Centrale,libro,2
+407,Il gene egoista,"Dawkins, Richard",scienze,1976,Centrale,libro,1
+408,Tempi moderni,"Chaplin, Charlie",film,1936,Centrale,dvd,1
+409,Il mio vicino Totoro,"Miyazaki, Hayao",animazione,1988,Centrale,dvd,1
+410,Con gli occhi chiusi,"Tozzi, Federigo",narrativa italiana,1919,Centrale,libro,2
+411,Furore,"Steinbeck, John",narrativa straniera,1939,Centrale,libro,2
+412,I promessi sposi,"Manzoni, Alessandro",narrativa italiana,1840,Centrale,libro,1
+413,Uomini che odiano le donne,"Larsson, Stieg",gialli,2005,Centrale,libro,2
+414,Siddharta,"Hesse, Hermann",narrativa straniera,1922,Centrale,libro,1
+415,La misura del tempo,"Carofiglio, Gianrico",gialli,2019,Centrale,libro,3
+416,Come Dio comanda,"Ammaniti, Niccolò",narrativa italiana,2006,San Rocco,libro,3
+417,"Gödel, Escher, Bach","Hofstadter, Douglas R.",scienze,1979,Centrale,libro,1
+418,Todo modo,"Sciascia, Leonardo",narrativa italiana,1974,Borgo Nuovo,libro,2
+419,La strada,"McCarthy, Cormac",narrativa straniera,2006,Borgo Nuovo,libro,2
+420,I leoni di Sicilia,"Auci, Stefania",narrativa italiana,2019,San Rocco,libro,1
+421,Il gioco del mondo,"Cortázar, Julio",narrativa straniera,1963,Centrale,libro,2
+422,La svastica sul sole,"Dick, Philip K.",fantascienza e fantasy,1962,Centrale,libro,1
+423,Norwegian Wood,"Murakami, Haruki",narrativa straniera,1987,Centrale,libro,1
+424,"National Geographic Italia, febbraio 2026",,periodico,2026,Centrale,rivista,1
+425,Grandi speranze,"Dickens, Charles",narrativa straniera,1861,Centrale,libro,1
+426,Novella degli scacchi,"Zweig, Stefan",narrativa straniera,1942,San Rocco,libro,2
+427,Il piccolo principe,"Saint-Exupéry, Antoine de",ragazzi,1943,Centrale,libro,1
+428,"Uno, nessuno e centomila","Pirandello, Luigi",narrativa italiana,1926,San Rocco,libro,3
+429,Le chiese di Valdoria,"Sala, Giovanna",storia locale,2004,Centrale,libro,2
+430,Il sentiero dei nidi di ragno,"Calvino, Italo",narrativa italiana,1947,San Rocco,libro,1
+431,Modernità liquida,"Bauman, Zygmunt",saggistica,2000,Borgo Nuovo,libro,3
+432,La noia,"Moravia, Alberto",narrativa italiana,1960,Centrale,libro,1
+433,I Buddenbrook,"Mann, Thomas",narrativa straniera,1901,Centrale,libro,1
+434,Apologia della storia,"Bloch, Marc",storia,1949,Borgo Nuovo,libro,1
+435,La lunga vita di Marianna Ucrìa,"Maraini, Dacia",narrativa italiana,1990,Centrale,libro,2
+436,Mastro-don Gesualdo,"Verga, Giovanni",narrativa italiana,1889,Centrale,libro,3
+437,Bar Sport,"Benni, Stefano",narrativa italiana,1976,Centrale,libro,1
+438,Gli indifferenti,"Moravia, Alberto",narrativa italiana,1929,Centrale,libro,1
+439,Il re leone,"Allers, Roger",animazione,1994,Centrale,dvd,1
+440,WALL-E,"Stanton, Andrew",animazione,2008,Borgo Nuovo,dvd,1
+441,Lo stralisco,"Piumini, Roberto",ragazzi,1987,Centrale,libro,3
+442,La metamorfosi,"Kafka, Franz",narrativa straniera,1915,Borgo Nuovo,libro,2
+443,"National Geographic Italia, maggio 2025",,periodico,2025,Centrale,rivista,1
+444,Una storia di amore e di tenebra,"Oz, Amos",narrativa straniera,2002,Borgo Nuovo,libro,1
+445,L'assassinio di Roger Ackroyd,"Christie, Agatha",gialli,1926,Centrale,libro,2
+446,La fabbrica di cioccolato,"Dahl, Roald",ragazzi,1964,Centrale,libro,2
+447,L'inverno di Clara,"Orsini, Chiara",narrativa italiana,2026,Centrale,libro,1
+448,Verde brillante,"Mancuso, Stefano",scienze,2013,Centrale,libro,2
+449,Il vecchio e il mare,"Hemingway, Ernest",narrativa straniera,1952,Centrale,libro,1
+450,"Focus, novembre 2025",,periodico,2025,Centrale,rivista,1
+451,Mastro-don Gesualdo,"Verga, Giovanni",narrativa italiana,1889,Borgo Nuovo,libro,3
+452,Io non ho paura,"Ammaniti, Niccolò",narrativa italiana,2001,Centrale,libro,2
+453,Frankenstein,"Shelley, Mary",narrativa straniera,1818,Centrale,libro,2
+454,Caporetto,"Barbero, Alessandro",storia,2017,Centrale,libro,1
+455,Il cacciatore di aquiloni,"Hosseini, Khaled",narrativa straniera,2003,Borgo Nuovo,libro,2
+456,Uno studio in rosso,"Conan Doyle, Arthur",gialli,1887,Centrale,libro,1
+457,Cent'anni di solitudine,"García Márquez, Gabriel",narrativa straniera,1967,Centrale,libro,2
+458,La solitudine dei numeri primi,"Giordano, Paolo",narrativa italiana,2008,Centrale,libro,2
+459,Assassino senza volto,"Mankell, Henning",gialli,1991,Borgo Nuovo,libro,2
+460,Gomorra,"Garrone, Matteo",film,2008,Centrale,dvd,1
+461,Le vie della seta,"Frankopan, Peter",storia,2015,Borgo Nuovo,libro,1
+462,I Malavoglia,"Verga, Giovanni",narrativa italiana,1881,Centrale,libro,2
+463,Moby Dick,"Melville, Herman",narrativa straniera,1851,Centrale,libro,3
+464,La fattoria degli animali,"Orwell, George",narrativa straniera,1945,Borgo Nuovo,libro,2
+465,Il trono di spade,"Martin, George R.R.",fantascienza e fantasy,1996,San Rocco,libro,1
+466,Il libro delle case,"Bajani, Andrea",narrativa italiana,2021,San Rocco,libro,2
+467,La vita bugiarda degli adulti,"Ferrante, Elena",narrativa italiana,2019,Borgo Nuovo,libro,2
+468,Elogio dell'imperfezione,"Levi-Montalcini, Rita",saggistica,1987,Borgo Nuovo,libro,1
+469,La grande bellezza,"Sorrentino, Paolo",film,2013,Centrale,dvd,1
+470,C'era una volta il West,"Leone, Sergio",film,1968,Centrale,dvd,1
+471,La tregua,"Levi, Primo",narrativa italiana,1963,Centrale,libro,1
+472,Il barone rampante,"Calvino, Italo",narrativa italiana,1957,Centrale,libro,3
+473,Una storia di amore e di tenebra,"Oz, Amos",narrativa straniera,2002,Centrale,libro,1
+474,Persone normali,"Rooney, Sally",narrativa straniera,2018,Centrale,libro,2
+475,"Io, robot","Asimov, Isaac",fantascienza e fantasy,1950,Centrale,libro,1
+476,Storia di Roma,"Montanelli, Indro",storia,1957,Centrale,libro,1
+477,Harry Potter e la camera dei segreti,"Rowling, J.K.",ragazzi,1998,Centrale,libro,1
+478,Emma,"Austen, Jane",narrativa straniera,1815,Borgo Nuovo,libro,1
+479,"National Geographic Italia, settembre 2025",,periodico,2025,Centrale,rivista,1
+480,C'era due volte il barone Lamberto,"Rodari, Gianni",ragazzi,1978,Centrale,libro,3
+481,La briscola in cinque,"Malvaldi, Marco",gialli,2007,Borgo Nuovo,libro,1
+482,Orgoglio e pregiudizio,"Austen, Jane",narrativa straniera,1813,Borgo Nuovo,libro,1
+483,Un indovino mi disse,"Terzani, Tiziano",viaggi,1995,Centrale,libro,1
+484,Le avventure di Tom Sawyer,"Twain, Mark",ragazzi,1876,Borgo Nuovo,libro,1
+485,La civiltà dell'Occidente medievale,"Le Goff, Jacques",storia,1964,Borgo Nuovo,libro,2
+486,Nuovo Cinema Paradiso,"Tornatore, Giuseppe",film,1988,Borgo Nuovo,dvd,1
+487,Il secolo breve,"Hobsbawm, Eric J.",storia,1994,Centrale,libro,4
+488,Il padrino,"Coppola, Francis Ford",film,1972,Borgo Nuovo,dvd,1
+489,Delitto e castigo,"Dostoevskij, Fëdor",narrativa straniera,1866,Centrale,libro,2
+490,L'uomo di Marte,"Weir, Andy",fantascienza e fantasy,2011,Borgo Nuovo,libro,2
+491,Ma gli androidi sognano pecore elettriche?,"Dick, Philip K.",fantascienza e fantasy,1968,San Rocco,libro,2
+492,Le tigri di Mompracem,"Salgari, Emilio",ragazzi,1900,Centrale,libro,3
+493,L'Étranger,"Camus, Albert",narrativa in lingua originale,1942,Centrale,libro,1
+494,Storia di una gabbianella e del gatto che le insegnò a volare,"Sepúlveda, Luis",ragazzi,1996,Borgo Nuovo,libro,1
+495,The Great Gatsby,"Fitzgerald, Francis Scott",narrativa in lingua originale,1925,Centrale,libro,1
+496,Il Gruffalò,"Donaldson, Julia",ragazzi,1999,Centrale,libro,2
+497,Cristo si è fermato a Eboli,"Levi, Carlo",narrativa italiana,1945,Borgo Nuovo,libro,2
+498,Limonov,"Carrère, Emmanuel",narrativa straniera,2011,San Rocco,libro,1
+499,"Quattroruote, aprile 2026",,periodico,2026,Centrale,rivista,1
+500,Suite francese,"Némirovsky, Irène",narrativa straniera,2004,Centrale,libro,1
+501,"Airone, marzo 2025",,periodico,2025,Centrale,rivista,1
+502,Il Canzoniere,"Saba, Umberto",poesia,1921,Centrale,libro,2
+503,La vita è bella,"Benigni, Roberto",film,1997,Centrale,dvd,1
+504,Il mio nome è rosso,"Pamuk, Orhan",narrativa straniera,1998,Borgo Nuovo,libro,1
+505,La casa sul canale,"Bellandi, Marco",gialli,2025,Centrale,libro,1
+506,Quel che resta del giorno,"Ishiguro, Kazuo",narrativa straniera,1989,Borgo Nuovo,libro,1
+507,Una giornata nell'antica Roma,"Angela, Alberto",storia,2007,Centrale,libro,1
+508,Il mondo nuovo,"Huxley, Aldous",fantascienza e fantasy,1932,Centrale,libro,2
+509,Il cimitero di Praga,"Eco, Umberto",narrativa italiana,2010,Centrale,libro,1
+510,Il deserto dei Tartari,"Buzzati, Dino",narrativa italiana,1940,Borgo Nuovo,libro,3
+511,2001: Odissea nello spazio,"Kubrick, Stanley",film,1968,Centrale,dvd,1
+512,Memorie di Adriano,"Yourcenar, Marguerite",narrativa straniera,1951,San Rocco,libro,1
+513,La strada,"McCarthy, Cormac",narrativa straniera,2006,Centrale,libro,2
+514,La città incantata,"Miyazaki, Hayao",animazione,2001,Centrale,dvd,1
+515,Cuore,"De Amicis, Edmondo",ragazzi,1886,Centrale,libro,2
+516,Lo Hobbit,"Tolkien, J.R.R.",fantascienza e fantasy,1937,Borgo Nuovo,libro,2
+517,L'Arminuta,"Di Pietrantonio, Donatella",narrativa italiana,2017,San Rocco,libro,1
+518,Pietr il Lettone,"Simenon, Georges",gialli,1931,San Rocco,libro,2
+519,Il racconto dell'ancella,"Atwood, Margaret",narrativa straniera,1985,San Rocco,libro,1
+520,Le stagioni del fiume,"Ferraris, Giulia",narrativa italiana,2025,Centrale,libro,3
+521,Emma,"Austen, Jane",narrativa straniera,1815,Centrale,libro,1
+522,Frankenstein,"Shelley, Mary",narrativa straniera,1818,San Rocco,libro,3

@@ -1,0 +1,81 @@
+id,nome,cognome,tessera,data_iscrizione,sede_iscrizione
+1,Gabriele,Mazza,ordinaria,2019-03-25,Centrale
+2,Claudio,Colombo,ordinaria,2022-04-20,Centrale
+3,Federico,Lombardi,studenti,2019-05-25,Centrale
+4,Ilaria,Mancini,ordinaria,2020-11-18,San Rocco
+5,Claudio,Mancini,ordinaria,2023-06-01,Borgo Nuovo
+6,Filippo,Costa,studenti,2025-03-24,Centrale
+7,Noemi,Conte,ordinaria,2025-04-19,Centrale
+8,Caterina,Bianchi,famiglia,2018-02-19,Centrale
+9,Chiara,Barone,ordinaria,2024-03-18,Centrale
+10,Mattia,Donati,famiglia,2025-05-29,Centrale
+11,Federico,Farina,famiglia,2012-11-09,Borgo Nuovo
+12,Ilaria,Bianco,famiglia,2018-03-17,Borgo Nuovo
+13,Diego,Parisi,ordinaria,2020-02-27,Centrale
+14,Claudio,Mariani,ordinaria,2021-10-18,Centrale
+15,Roberta,Caruso,famiglia,2022-07-30,Centrale
+16,Nicola,Orlando,ordinaria,2019-04-02,Centrale
+17,Irene,Mazza,studenti,2015-02-18,Centrale
+18,Samuele,Esposito,famiglia,2016-12-02,Centrale
+19,Nicola,Barone,studenti,2026-06-17,Centrale
+20,Diego,Vitale,famiglia,2019-07-29,Centrale
+21,Aurora,Pellegrini,ordinaria,2017-12-14,Borgo Nuovo
+22,Francesco,Santoro,famiglia,2025-02-27,Centrale
+23,Marta,Riva,ordinaria,2021-03-16,Centrale
+24,Elena,De Santis,ordinaria,2021-09-08,Centrale
+25,Francesca,Morelli,studenti,2026-03-04,Centrale
+26,Tommaso,Gallo,studenti,2013-11-12,Centrale
+27,Elisa,Giordano,studenti,2017-09-06,San Rocco
+28,Roberta,Ferrari,ordinaria,2017-11-14,Centrale
+29,Federico,Coppola,ordinaria,2014-09-10,Centrale
+30,Giovanni,Orlando,ordinaria,2018-06-05,Centrale
+31,Tommaso,Vitale,famiglia,2013-11-12,Borgo Nuovo
+32,Pietro,Piras,studenti,2015-06-23,Centrale
+33,Tommaso,Fiore,ordinaria,2015-11-11,Borgo Nuovo
+34,Fabio,Battaglia,ordinaria,2023-02-21,Centrale
+35,Samuele,Bellini,famiglia,2024-12-05,Centrale
+36,Alessandro,Sanna,ordinaria,2012-09-25,Centrale
+37,Daniela,Bernardi,ordinaria,2023-06-21,Centrale
+38,Lucia,Sartori,studenti,2017-07-19,Centrale
+39,Mattia,Ricci,famiglia,2023-07-06,Borgo Nuovo
+40,Francesca,Piras,studenti,2020-03-17,Centrale
+41,Marta,Galli,studenti,2024-10-08,Borgo Nuovo
+42,Camilla,Piras,ordinaria,2023-02-23,Borgo Nuovo
+43,Paola,Fontana,ordinaria,2026-06-10,Centrale
+44,Alessandro,Testa,studenti,2018-01-22,Centrale
+45,Roberta,Morelli,ordinaria,2017-04-21,Borgo Nuovo
+46,Francesca,Montanari,ordinaria,2023-02-03,Centrale
+47,Anna,D'Angelo,studenti,2017-07-12,Centrale
+48,Mattia,Monti,studenti,2024-03-14,Centrale
+49,Enrico,Colombo,studenti,2017-05-08,Centrale
+50,Alberto,Bianco,studenti,2022-05-25,San Rocco
+51,Gabriele,Fiore,famiglia,2020-12-24,Centrale
+52,Filippo,Basile,famiglia,2013-08-13,Centrale
+53,Lorenzo,Sanna,ordinaria,2019-08-03,San Rocco
+54,Tommaso,Piras,ordinaria,2012-10-05,Centrale
+55,Roberta,De Angelis,studenti,2014-01-25,Borgo Nuovo
+56,Monica,Montanari,studenti,2024-08-29,Centrale
+57,Laura,Giordano,ordinaria,2015-03-23,Centrale
+58,Paolo,Riva,famiglia,2019-05-11,Centrale
+59,Francesco,Bianco,ordinaria,2018-11-26,San Rocco
+60,Alessandro,Benedetti,ordinaria,2025-04-14,Centrale
+61,Emanuele,Martinelli,studenti,2025-03-31,Centrale
+62,Fabio,Silvestri,ordinaria,2018-04-27,Borgo Nuovo
+63,Michele,Guerra,ordinaria,2014-10-15,Borgo Nuovo
+64,Rita,Donati,ordinaria,2016-10-21,Borgo Nuovo
+65,Veronica,Benedetti,ordinaria,2025-10-08,Borgo Nuovo
+66,Rita,Conte,studenti,2016-01-23,Centrale
+67,Daniela,Esposito,ordinaria,2014-04-14,Centrale
+68,Roberto,Battaglia,ordinaria,2013-02-09,Borgo Nuovo
+69,Claudio,Marchetti,ordinaria,2024-04-26,Borgo Nuovo
+70,Lucia,Bianco,studenti,2014-04-30,San Rocco
+71,Marco,Rizzo,ordinaria,2025-02-13,Borgo Nuovo
+72,Alessia,Barbieri,ordinaria,2024-09-27,Borgo Nuovo
+73,Andrea,Lombardi,ordinaria,2013-10-28,San Rocco
+74,Paola,Silvestri,studenti,2023-03-29,Centrale
+75,Luca,Messina,ordinaria,2023-04-19,Centrale
+76,Alberto,Costa,famiglia,2012-01-14,Centrale
+77,Lucia,Marino,ordinaria,2024-10-26,San Rocco
+78,Daniela,Villa,ordinaria,2013-07-16,Centrale
+79,Noemi,Rizzo,ordinaria,2016-11-19,Centrale
+80,Enrico,Palmieri,studenti,2021-07-26,Centrale
