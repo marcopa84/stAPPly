@@ -156,9 +156,8 @@ Nessun test usa la rete né una chiave OpenAI:
 La CI ([`.github/workflows/`](.github/workflows/)) ha un workflow per servizio, filtrato per
 percorso:
 
-- `backend.yml`: `uv sync --locked`, Ruff e pytest. Installa anche PHP e l'autoload del
-  frontend (`composer install --no-dev`), perché un test confronta le istruzioni lette da
-  `scripts/griglia.py` con quelle che vede PHP;
+- `backend.yml`: `uv sync --locked`, Ruff e pytest. Installa anche PHP, perché un test
+  confronta le istruzioni lette da `scripts/griglia.py` con quelle che vede PHP;
 - `frontend.yml`: Composer, `npm ci`, build, Pint, PHPStan (livello 7) e Pest.
 
 Tutti e due girano anche quando cambia il contratto. Il backend gira anche quando cambiano

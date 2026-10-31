@@ -7,6 +7,7 @@ chiave nell'ambiente, da qui non parte nessuna chiamata a OpenAI.
 
 import asyncio
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -26,7 +27,6 @@ from tests.conftest import SEED
 from tests.modello_finto import Chiamata, ModelloFinto, chiama, cita_il_primo_passaggio, scrive
 
 TEMI = ("valtesa", "valdoria")
-AUTOLOAD = griglia.DEMO_SEEDER.parents[2] / "vendor" / "autoload.php"
 SQL = "SELECT COUNT(*) AS note FROM note_spese WHERE stato = 'in attesa'"
 
 
@@ -168,17 +168,24 @@ def test_le_istruzioni_si_leggono_da_demo_seeder(tema):
         assert re.search(rf"\n[ \t]+{re.escape(riga)}\n", seeder), riga
 
 
-@pytest.mark.skipif(
-    shutil.which("php") is None or not AUTOLOAD.exists(),
-    reason="servono php e frontend/vendor, che la CI del backend non ha",
-)
 @pytest.mark.parametrize("tema", TEMI)
 def test_il_parser_legge_le_costanti_come_php(tema):
+    if shutil.which("php") is None:
+        # In CI PHP c'è sempre: lì un test saltato nasconderebbe una divergenza.
+        if os.environ.get("CI"):
+            pytest.fail("in CI serve php per confrontare il parser con PHP")
+        pytest.skip("serve php")
     costante = carica(tema)["costante_istruzioni"]
-    codice = r"require $argv[1]; echo constant('Database\Seeders\DemoSeeder::' . $argv[2]);"
+    # Una classe madre finta al posto di frontend/vendor: per leggere una costante basta che
+    # `extends Seeder` si risolva, e la CI del backend non deve installare il frontend.
+    codice = (
+        r"namespace Illuminate\Database { abstract class Seeder {} } "
+        r"namespace { require $argv[1]; "
+        r"echo constant('Database\Seeders\DemoSeeder::' . $argv[2]); }"
+    )
 
     php = subprocess.run(
-        ["php", "-r", codice, str(AUTOLOAD), costante],
+        ["php", "-r", codice, str(griglia.DEMO_SEEDER), costante],
         capture_output=True,
         text=True,
         check=True,
