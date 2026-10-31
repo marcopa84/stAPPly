@@ -99,12 +99,12 @@ describe('file', function () {
 
         [$sandbox, $copy] = ownerWithAgent(User::factory()->demoSandbox()->create(), 'copia-demo');
 
+        // Il file si ferma appena scelto, senza arrivare all'upload.
         Livewire::actingAs($sandbox)
             ->test(Documents::class, ['agent' => $copy])
             ->assertSee('fino a 2 MB')
             ->assertSee('2 di 10')
             ->set('file', $big())
-            ->call('upload')
             ->assertHasErrors(['file' => 'max']);
 
         [$user, $agent] = ownerWithAgent(User::factory()->create(), 'agente-di-prova');

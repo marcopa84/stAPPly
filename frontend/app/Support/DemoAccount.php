@@ -24,6 +24,9 @@ final class DemoAccount
 
     public const ENDED_MESSAGE = 'La tua demo è terminata. Con «Accedi alla demo» ne apri una nuova, che riparte dai valori iniziali.';
 
+    /** In sessione dal login demo: dice che la sessione era di una sandbox anche dopo che il prune l'ha cancellata. */
+    public const SANDBOX_SESSION_KEY = 'demo_sandbox';
+
     /** Dominio delle email delle sandbox: .invalid è riservato, nessuna email può arrivarci. */
     public const SANDBOX_DOMAIN = 'sandbox.stapply.invalid';
 

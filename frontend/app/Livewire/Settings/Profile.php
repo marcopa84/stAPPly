@@ -8,11 +8,12 @@ use Flux\Flux;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('Profile settings')]
+#[Title('Profilo')]
 class Profile extends Component
 {
     use ProfileValidationRules;
@@ -39,6 +40,11 @@ class Profile extends Component
 
         // Cambiare l'email dell'utente demo lascerebbe fuori tutti, come la password.
         DemoAccount::abortIfDemo($user);
+
+        // In minuscolo come la salvano registrazione, login e recupero password di Fortify
+        // (lowercase_usernames): con le maiuscole il login non la troverebbe più, e
+        // l'unique non vedrebbe un doppione scritto in un altro modo.
+        $this->email = Str::lower(trim($this->email));
 
         $validated = $this->validate($this->profileRules($user->id));
 

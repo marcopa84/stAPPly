@@ -2,15 +2,16 @@
 
 namespace App\Services\Demo;
 
-use App\Models\Agent;
 use App\Models\User;
+use App\Services\Agents\AgentPurger;
+use App\Services\Agents\ProtectedAgentException;
 use App\Services\Backend\BackendClient;
 use App\Services\Backend\BackendException;
 use App\Support\DemoAccount;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\RateLimiter;
 use Throwable;
 
 /**
@@ -21,20 +22,34 @@ use Throwable;
  * né le sandbox degli altri.
  *
  * Una sandbox scade dopo stapply.demo.sandbox_minutes o al logout; prune() la
- * cancella, prima nel backend e poi qui, e non tocca mai gli agenti del template.
+ * cancella, prima nel backend e poi qui, e non tocca mai gli agenti del template
+ * (AgentPurger).
  */
 class DemoSandbox
 {
-    public function __construct(private readonly BackendClient $backend) {}
+    public function __construct(
+        private readonly BackendClient $backend,
+        private readonly AgentPurger $agents,
+    ) {}
 
     /**
      * Crea una sandbox con la copia di ogni agente demo del template. Se una copia
      * fallisce si annulla tutto quello creato in questo tentativo, e solo quello.
      *
+     * Le sandbox aperte sono al massimo stapply.demo.max_sandboxes, e uno stesso IP ne
+     * apre al massimo stapply.demo.sandboxes_per_ip_per_hour all'ora: senza, una sola
+     * persona, scartando il cookie a ogni login, riempirebbe la demo per tutti.
+     *
      * @throws DemoUnavailableException
      */
-    public function open(User $template): User
+    public function open(User $template, string $ip): User
     {
+        $perIp = "demo-sandboxes:ip:{$ip}";
+
+        if (RateLimiter::tooManyAttempts($perIp, Config::integer('stapply.demo.sandboxes_per_ip_per_hour'))) {
+            throw DemoUnavailableException::tooManyFromHere(RateLimiter::availableIn($perIp));
+        }
+
         $this->pruneQuietly();
 
         if (User::query()->activeDemoSandbox()->count() >= Config::integer('stapply.demo.max_sandboxes')) {
@@ -52,8 +67,6 @@ class DemoSandbox
             'demo_expires_at' => now()->addMinutes(Config::integer('stapply.demo.sandbox_minutes')),
         ])->save();
 
-        $copied = [];
-
         try {
             foreach ($template->agents()->where('is_demo', true)->oldest('id')->get() as $source) {
                 // La copia è del visitatore: si modifica e si elimina come ogni suo agente.
@@ -64,14 +77,15 @@ class DemoSandbox
                 ]);
 
                 $this->backend->cloneAgent($copy->backend_id, $source->backend_id);
-
-                $copied[] = $copy->id;
             }
         } catch (Throwable $e) {
-            $this->abandon($sandbox, $copied);
+            $this->abandon($sandbox);
 
             throw $e instanceof BackendException ? DemoUnavailableException::backend($e) : $e;
         }
+
+        // Contano solo le sandbox aperte davvero: un guasto del backend non toglie tentativi.
+        RateLimiter::hit($perIp, 3600);
 
         return $sandbox;
     }
@@ -114,39 +128,37 @@ class DemoSandbox
     }
 
     /**
-     * Annulla una sandbox appena creata. Gli agenti la cui copia non è riuscita non hanno
-     * dati nel backend e si tolgono solo qui; gli altri li cancella purge(). Se il backend
-     * non risponde nemmeno adesso la sandbox resta, scaduta, e la cancella il prossimo
-     * prune: così nel backend non restano dati senza proprietario.
-     *
-     * @param  list<int>  $copied  gli agenti già copiati nel backend
+     * Annulla una sandbox appena creata: la chiude, e purge() manda la DELETE per ogni
+     * suo agente, anche per quello la cui copia è fallita. Un errore visto da qui (un
+     * timeout, una risposta inattesa) non dice che il backend non abbia copiato niente,
+     * e la DELETE va bene anche per un agente senza dati. Se il backend non risponde
+     * nemmeno adesso la sandbox resta, scaduta, e la cancella il prossimo prune: così
+     * nel backend non restano dati senza proprietario.
      */
-    private function abandon(User $sandbox, array $copied): void
+    private function abandon(User $sandbox): void
     {
-        $sandbox->agents()->whereKeyNot($copied)->delete();
         $sandbox->expireDemoSandbox();
 
         $this->purge($sandbox);
     }
 
     /**
-     * Cancella una sandbox: i dati di ogni agente nel backend, poi l'utente con agenti,
-     * chat e messaggi. Se il backend fallisce la sandbox resta per il giro dopo.
+     * Cancella una sandbox: ogni agente, prima nel backend e poi qui, poi l'utente con
+     * chat e messaggi. Se il backend fallisce la sandbox resta per il giro dopo, senza
+     * gli agenti già cancellati.
      */
     private function purge(User $sandbox): bool
     {
         foreach ($sandbox->agents()->get() as $agent) {
-            if ($this->isProtected($agent)) {
+            try {
+                $this->agents->purge($agent);
+            } catch (ProtectedAgentException) {
                 Log::error('Demo: rifiutata la cancellazione di un agente demo o del template; la sandbox resta.', [
                     'sandbox' => $sandbox->id,
                     'backend_id' => $agent->backend_id,
                 ]);
 
                 return false;
-            }
-
-            try {
-                $this->backend->deleteAgent($agent->backend_id);
             } catch (BackendException $e) {
                 Log::warning('Demo: il backend non ha cancellato un agente della sandbox, si riprova al prossimo giro.', [
                     'sandbox' => $sandbox->id,
@@ -156,30 +168,10 @@ class DemoSandbox
 
                 return false;
             }
-
-            // Già cancellato nel backend: al prossimo giro non si ripete.
-            $agent->delete();
         }
 
         $sandbox->delete();
 
         return true;
-    }
-
-    /**
-     * Ultima difesa prima di una DELETE: un agente demo o del template non si cancella
-     * mai, qualunque errore ci sia nel resto del codice. Si controlla sul DB, non su un
-     * elenco di id scritto a mano.
-     */
-    private function isProtected(Agent $agent): bool
-    {
-        return Agent::query()
-            ->where('backend_id', $agent->backend_id)
-            ->where(fn (Builder $query) => $query
-                ->where('is_demo', true)
-                ->orWhereHas('user', fn (Builder $owner) => $owner
-                    ->where('email', Str::lower(Config::string('stapply.demo.email')))
-                    ->whereNull('demo_expires_at')))
-            ->exists();
     }
 }

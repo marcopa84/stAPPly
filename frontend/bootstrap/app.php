@@ -2,6 +2,9 @@
 
 use App\Http\Middleware\EndFinishedDemoSession;
 use App\Http\Middleware\ProtectDemoAccount;
+use App\Http\Middleware\RestrictImageSources;
+use App\Http\Middleware\ThrottleRegistration;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,7 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [EndFinishedDemoSession::class, ProtectDemoAccount::class]);
+        $middleware->web(append: [
+            EndFinishedDemoSession::class,
+            ProtectDemoAccount::class,
+            ThrottleRegistration::class,
+            RestrictImageSources::class,
+        ]);
+
+        // Prima di auth: con la sandbox già cancellata dal prune, auth manderebbe al login
+        // senza spiegare che la demo è finita.
+        $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: EndFinishedDemoSession::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

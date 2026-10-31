@@ -6,12 +6,14 @@ use App\Models\Agent;
 use App\Services\Backend\BackendClient;
 use App\Services\Backend\BackendException;
 use App\Support\DemoAccount;
-use App\Support\DemoLimits;
+use App\Support\UsageLimits;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
@@ -20,7 +22,11 @@ use Livewire\WithFileUploads;
  * backend, elenco letto dal backend, eliminazione confermata in un modal.
  *
  * L'agente demo si consulta soltanto: i suoi file li carica lo script del backend.
- * Nelle sandbox della demo valgono limiti più bassi (App\Support\DemoLimits).
+ * I caricamenti hanno limiti di costo per utente, più bassi nelle sandbox della demo
+ * (App\Support\UsageLimits).
+ *
+ * Il file scelto arriva prima nella cartella temporanea di Livewire: lì resta solo
+ * il tempo di mandarlo al backend, poi si cancella comunque sia andata.
  */
 abstract class FilesSection extends Component
 {
@@ -31,8 +37,8 @@ abstract class FilesSection extends Component
 
     public ?TemporaryUploadedFile $file = null;
 
-    /** Cambia a ogni upload riuscito, per svuotare il campo file (che Flux non ridisegna). */
-    public int $uploads = 0;
+    /** Cambia ogni volta che il file si scarta, per svuotare il campo file (che Flux non ridisegna). */
+    public int $fileInputKey = 0;
 
     public bool $showDeleteModal = false;
 
@@ -66,6 +72,11 @@ abstract class FilesSection extends Component
      * @throws BackendException
      */
     abstract protected function destroy(string $id): void;
+
+    /**
+     * La regex di docs/api.md per l'id di un documento o di una tabella.
+     */
+    abstract protected function idPattern(): string;
 
     /**
      * Quanti documenti o tabelle ha già l'agente, letti dal backend.
@@ -126,9 +137,18 @@ abstract class FilesSection extends Component
         ];
     }
 
+    /**
+     * Un file rifiutato (formato, dimensione) non resta nella cartella temporanea.
+     */
     public function updatedFile(): void
     {
-        $this->validateOnly('file');
+        try {
+            $this->validateOnly('file');
+        } catch (ValidationException $e) {
+            $this->discardFile();
+
+            throw $e;
+        }
     }
 
     /**
@@ -139,33 +159,34 @@ abstract class FilesSection extends Component
     {
         $this->authorize('manageFiles', $this->agent);
 
-        $this->validate();
-
-        $reason = $this->demoLimitReason();
-
-        if ($reason !== null) {
-            $this->addError('file', $reason);
-
-            return;
-        }
-
         try {
-            $message = $this->store($this->file);
+            $this->validate();
+
+            $reason = $this->limitReason();
+
+            if ($reason !== null) {
+                $this->addError('file', $reason);
+
+                return;
+            }
+
+            Flux::toast(variant: 'success', text: $this->store($this->file));
         } catch (BackendException $e) {
             $this->addError('file', $e->getMessage());
-
-            return;
+        } finally {
+            // Anche dopo un errore: un documento eliminato non deve restare sul server.
+            $this->discardFile();
         }
-
-        $this->reset('file');
-        $this->uploads++;
-
-        Flux::toast(variant: 'success', text: $message);
     }
 
+    /**
+     * L'id arriva dal browser e finisce nell'URL del backend: solo la forma di docs/api.md.
+     */
     public function confirmDelete(string $id, string $name): void
     {
         $this->authorize('manageFiles', $this->agent);
+
+        abort_unless(preg_match($this->idPattern(), $id) === 1, 404);
 
         $this->deletingId = $id;
         $this->deletingName = $name;
@@ -246,30 +267,44 @@ abstract class FilesSection extends Component
     }
 
     /**
-     * I limiti delle sandbox demo, più bassi di quelli del backend: file per agente e
-     * caricamenti all'ora di tutte le sandbox insieme. A limite pieno anche una
-     * sostituzione chiede di eliminare prima il file vecchio.
+     * Il motivo per non caricare, o null. Le sandbox hanno meno file per agente del
+     * backend (a limite pieno anche una sostituzione chiede di eliminare prima il file
+     * vecchio); per tutti contano i caricamenti all'ora e al giorno, ma solo quelli che
+     * partono davvero.
      */
-    private function demoLimitReason(): ?string
+    private function limitReason(): ?string
     {
-        if (! DemoAccount::isSandbox(Auth::user())) {
-            return null;
-        }
+        $user = Auth::user();
 
-        try {
-            if ($this->storedCount() >= $this->maxFiles()) {
-                return $this->limitReachedMessage();
+        if (DemoAccount::isSandbox($user)) {
+            try {
+                if ($this->storedCount() >= $this->maxFiles()) {
+                    return $this->limitReachedMessage();
+                }
+            } catch (BackendException $e) {
+                return $e->getMessage();
             }
-        } catch (BackendException $e) {
-            return $e->getMessage();
         }
 
-        return DemoLimits::hitUpload();
+        return UsageLimits::hitUpload($user);
+    }
+
+    private function discardFile(): void
+    {
+        if ($this->file !== null) {
+            $this->file->delete();
+
+            // Accanto al file Livewire salva i metadati (nome originale, tipo), che delete() lascia.
+            FileUploadConfiguration::storage()->delete(FileUploadConfiguration::path($this->file->getFilename().'.json', false));
+        }
+
+        $this->reset('file');
+        $this->fileInputKey++;
     }
 
     private function maxUploadMb(): int
     {
-        return DemoLimits::maxUploadMb(Auth::user());
+        return UsageLimits::maxUploadMb(Auth::user());
     }
 
     /**

@@ -76,6 +76,13 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($throttleKey);
         });
 
+        // La registrazione dice se un'email è già usata: pochi tentativi per IP, perché non
+        // diventi un modo per farsi l'elenco degli utenti (vedi ThrottleRegistration).
+        RateLimiter::for('register', fn (Request $request) => [
+            Limit::perMinute(5)->by('minuto|'.$request->ip()),
+            Limit::perHour(20)->by('ora|'.$request->ip()),
+        ]);
+
         RateLimiter::for('passkeys', function (Request $request) {
             $credentialId = $request->input('credential.id');
 

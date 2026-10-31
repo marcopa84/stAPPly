@@ -4,7 +4,7 @@ namespace App\Livewire\Agents;
 
 use App\Livewire\Forms\AgentForm;
 use App\Models\Agent;
-use App\Services\Backend\BackendClient;
+use App\Services\Agents\AgentPurger;
 use App\Services\Backend\BackendException;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
@@ -38,22 +38,20 @@ class Edit extends Component
     }
 
     /**
-     * Prima si cancellano i dati nel backend, poi l'agente: se il backend non risponde
-     * l'agente resta, così non restano file e vettori senza più un proprietario.
+     * Prima i dati nel backend, poi l'agente (AgentPurger): se il backend non risponde
+     * l'agente resta, e il motivo compare nel modal.
      */
-    public function delete(BackendClient $backend): void
+    public function delete(AgentPurger $agents): void
     {
         $this->authorize('delete', $this->agent);
 
         try {
-            $backend->deleteAgent($this->agent->backend_id);
+            $agents->purge($this->agent);
         } catch (BackendException $e) {
             $this->deleteError = $e->getMessage();
 
             return;
         }
-
-        $this->agent->delete();
 
         session()->flash('status', "Agente «{$this->agent->name}» eliminato.");
 

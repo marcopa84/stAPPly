@@ -43,16 +43,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Chat
+    | Costi, per utente
     |--------------------------------------------------------------------------
     |
-    | Ogni messaggio costa una o più chiamate al modello: oltre questo numero di
-    | messaggi al minuto per utente la chat chiede di aspettare. Vale anche per
-    | "Riprova", che rimanda la domanda al backend.
+    | Tutti gli agenti usano la chiave OpenAI del progetto: ogni caricamento
+    | paga gli embedding, ogni messaggio una o più chiamate al modello. Oltre
+    | questi numeri l'interfaccia chiede di aspettare (App\Support\UsageLimits).
+    | Anche "Riprova" nella chat conta come un messaggio, e anche la
+    | sostituzione di un file come un caricamento.
     |
     */
 
+    'max_agents' => 10,
+
+    'uploads_per_hour' => 20,
+
+    'uploads_per_day' => 60,
+
     'chat_messages_per_minute' => 20,
+
+    'chat_messages_per_day' => 300,
 
     /*
     |--------------------------------------------------------------------------
@@ -67,10 +77,11 @@ return [
     | modificano tutto senza disturbarsi, e al prossimo accesso ripartono dai
     | valori iniziali.
     |
-    | I limiti tengono basso il costo delle sandbox, che usano la chiave OpenAI
-    | del progetto: quelli per sandbox (agenti, file, dimensione) e quelli
-    | comuni a tutte (messaggi al minuto, caricamenti all'ora). Gli altri
-    | utenti hanno i limiti generali qui sopra.
+    | Le sandbox hanno i limiti di costo per utente qui sopra, più quelli
+    | propri della demo, più bassi: per sandbox (agenti, file, dimensione) e
+    | comuni a tutte (messaggi al minuto, caricamenti all'ora). Un indirizzo IP
+    | apre al massimo sandboxes_per_ip_per_hour sandbox all'ora, così nessuno
+    | da solo riempie la demo per tutti.
     |
     */
 
@@ -83,6 +94,9 @@ return [
 
         // Sandbox aperte nello stesso momento: oltre, il login demo chiede di riprovare.
         'max_sandboxes' => 50,
+
+        // Sandbox aperte da uno stesso IP in un'ora.
+        'sandboxes_per_ip_per_hour' => 3,
 
         // Sandbox scadute cancellate a ogni login demo, oltre al giro orario di
         // stapply:prune-demo (Herd non ha cron).

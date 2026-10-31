@@ -3,7 +3,7 @@
 namespace App\Livewire\Agents;
 
 use App\Livewire\Forms\AgentForm;
-use App\Support\DemoLimits;
+use App\Support\UsageLimits;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
@@ -18,12 +18,12 @@ class Create extends Component
     public AgentForm $form;
 
     /**
-     * Perché non si può creare un altro agente (il limite delle sandbox demo), o null.
+     * Perché non si può creare un altro agente (il limite per utente, più basso nelle sandbox demo), o null.
      */
     #[Computed]
     public function limitReason(): ?string
     {
-        return DemoLimits::agentLimitReason(Auth::user());
+        return UsageLimits::agentLimitReason(Auth::user());
     }
 
     public function save(): void

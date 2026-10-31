@@ -21,7 +21,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
-#[Title('Security settings')]
+#[Title('Sicurezza')]
 class Security extends Component
 {
     use PasswordValidationRules;
@@ -216,7 +216,7 @@ class Security extends Component
             $this->qrCodeSvg = $user?->twoFactorQrCodeSvg();
             $this->manualSetupKey = decrypt($user->two_factor_secret);
         } catch (Exception) {
-            $this->addError('setupData', 'Failed to fetch setup data.');
+            $this->addError('setupData', 'Non è stato possibile caricare i dati per configurare l\'autenticazione a due fattori.');
 
             $this->reset('qrCodeSvg', 'manualSetupKey');
         }

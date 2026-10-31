@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AnswerRoute;
 use App\Enums\MessageRole;
 use App\Markdown\CitationExtension;
+use App\Markdown\ImageAsTextExtension;
 use App\Services\Backend\Data\ChatReply;
 use App\Services\Backend\Data\Source;
 use App\Services\Backend\Data\ToolCall;
@@ -31,6 +32,7 @@ use Illuminate\Support\Str;
  * @property string|null $route documenti, dati, documenti+dati o nessuna; null per i messaggi dell'utente
  * @property list<array{name: string, arguments: array<string, mixed>}>|null $tools
  * @property list<array{id: string, document_id: string, filename: string, text: string}>|null $sources
+ * @property Carbon|null $reply_started_at solo per le domande: quando reply() l'ha presa in carico
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Conversation $conversation
@@ -53,6 +55,7 @@ class Message extends Model
             'role' => MessageRole::class,
             'tools' => 'array',
             'sources' => 'array',
+            'reply_started_at' => 'datetime',
         ];
     }
 
@@ -67,6 +70,27 @@ class Message extends Model
     public function isFromUser(): bool
     {
         return $this->role === MessageRole::User;
+    }
+
+    /**
+     * Prende in carico la domanda per una chiamata al backend. L'UPDATE condizionale
+     * riesce a una richiesta sola: lo stesso snapshot di Livewire rimandato più volte,
+     * anche in parallelo, non arriva al modello una seconda volta.
+     */
+    public function claimForReply(): bool
+    {
+        return static::query()
+            ->whereKey($this->id)
+            ->whereNull('reply_started_at')
+            ->update(['reply_started_at' => now()]) === 1;
+    }
+
+    /**
+     * Per Riprova, che ha già contato il tentativo nel limite: la domanda torna da prendere in carico.
+     */
+    public function releaseForReply(): void
+    {
+        static::query()->whereKey($this->id)->update(['reply_started_at' => null]);
     }
 
     public function reachedMaxTurns(): bool
@@ -100,14 +124,15 @@ class Message extends Model
 
     /**
      * La risposta dell'agente in HTML. Viene da un modello che ha letto documenti
-     * caricati da chiunque, quindi il markdown perde l'HTML grezzo e i link pericolosi;
-     * gli id dei passaggi citati diventano chip che aprono il passaggio.
+     * caricati da chiunque, quindi il markdown perde l'HTML grezzo, i link pericolosi
+     * e le immagini, che il browser caricherebbe da solo; gli id dei passaggi citati
+     * diventano chip che aprono il passaggio.
      */
     public function answerHtml(): HtmlString
     {
         return new HtmlString(Str::markdown($this->content, [
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
-        ], [new CitationExtension($this->citedSources())]));
+        ], [new CitationExtension($this->citedSources()), new ImageAsTextExtension]));
     }
 }

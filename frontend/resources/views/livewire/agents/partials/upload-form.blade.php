@@ -5,8 +5,8 @@
             <flux:label>{{ $label }}</flux:label>
             <flux:description>{{ $hint }}</flux:description>
 
-            {{-- Il campo file di Flux è wire:ignore: per svuotarlo dopo un upload si cambia la chiave del contenitore. --}}
-            <div wire:key="file-input-{{ $uploads }}">
+            {{-- Il campo file di Flux è wire:ignore: per svuotarlo quando il file si scarta si cambia la chiave del contenitore. --}}
+            <div wire:key="file-input-{{ $fileInputKey }}">
                 <flux:input type="file" wire:model="file" :accept="$accept" />
             </div>
 

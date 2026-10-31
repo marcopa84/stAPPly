@@ -97,6 +97,7 @@
                             <flux:button
                                 size="xs"
                                 variant="ghost"
+                                aria-label="Prova la tabella {{ $table->name }}"
                                 x-on:click="$wire.sql = {{ Js::from("SELECT * FROM {$table->name} LIMIT 20") }}"
                             >
                                 Prova

@@ -14,6 +14,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use SensitiveParameter;
 
 /**
@@ -26,6 +27,14 @@ use SensitiveParameter;
  */
 class BackendClient
 {
+    /**
+     * Le regex di docs/api.md (le stesse di backend/app/core/ids.py) per gli id che genera
+     * il backend. D: senza, "$" accetterebbe anche un "\n" finale.
+     */
+    public const DOCUMENT_ID_PATTERN = '/^(?=.{1,80}$)[a-z0-9]+(?:-[a-z0-9]+)*$/D';
+
+    public const TABLE_PATTERN = '/^[a-z_][a-z0-9_]{0,59}$/D';
+
     /** Secondi concessi a /health: la dashboard non deve restare appesa a un backend bloccato. */
     private const HEALTH_TIMEOUT = 3;
 
@@ -185,13 +194,15 @@ class BackendClient
 
     /**
      * Una richiesta nuova a ogni chiamata: la PendingRequest tiene stato e il
-     * client è un singleton.
+     * client è un singleton. Il backend non reindirizza mai: un redirect seguito
+     * porterebbe la chiave interna, e il metodo, su un altro percorso.
      */
     private function http(): PendingRequest
     {
         return Http::baseUrl($this->baseUrl)
             ->withHeaders(['X-Internal-Key' => $this->key])
             ->acceptJson()
+            ->withoutRedirecting()
             ->timeout($this->timeout);
     }
 
@@ -224,15 +235,29 @@ class BackendClient
             ]);
         }
 
-        if ($response->failed()) {
+        // Anche un 3xx: con i redirect spenti arriverebbe qui come un successo.
+        if (! $response->successful()) {
             throw BackendException::fromResponse($response);
         }
 
         return $response;
     }
 
+    /**
+     * Un segmento per parametro, codificato. "." e ".." restano tali anche codificati, e
+     * il client HTTP li risolve: DELETE agents/x/tables/.. diventerebbe DELETE agents/x,
+     * cioè tutti i dati dell'agente. Vuoti non hanno senso: si fermano qui.
+     *
+     * @throws InvalidArgumentException
+     */
     private function path(string ...$segments): string
     {
+        foreach ($segments as $segment) {
+            if (in_array($segment, ['', '.', '..'], true)) {
+                throw new InvalidArgumentException("Segmento non valido nel percorso del backend: «{$segment}».");
+            }
+        }
+
         return implode('/', array_map(rawurlencode(...), $segments));
     }
 

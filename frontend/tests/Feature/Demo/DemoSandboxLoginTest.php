@@ -6,6 +6,7 @@ use App\Services\Demo\DemoUnavailableException;
 use App\Support\DemoAccount;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Client\ResponseSequence;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 
@@ -128,8 +129,11 @@ test('il template resta com\'era e il backend non riceve niente sui suoi agenti'
     Http::assertNotSent(fn ($request) => str_contains($request->url(), '/agents/demo-'));
 });
 
-test('con il backend giù il login demo fallisce senza lasciare utenti né copie', function () {
-    fakeBackend(['POST agents/*/clone' => Http::failedConnection()]);
+test('con il backend giù il login demo fallisce, e la sandbox resta solo chiusa, per il prune', function () {
+    fakeBackend([
+        'POST agents/*/clone' => Http::failedConnection(),
+        'DELETE agents/*' => Http::failedConnection(),
+    ]);
 
     demoLogin()->assertSessionHasErrors([
         'email' => DemoUnavailableException::backend(new RuntimeException)->getMessage(),
@@ -137,16 +141,17 @@ test('con il backend giù il login demo fallisce senza lasciare utenti né copie
 
     $this->assertGuest();
 
-    expect(User::count())->toBe(1)
-        ->and(Agent::count())->toBe(2)
-        ->and(agentsDeleted())->toBe([]);
+    // Senza risposta non si sa se la copia sia arrivata: l'agente resta finché il backend non lo cancella.
+    $leftover = sandboxes()->sole();
+
+    expect($leftover->demoSandboxExpired())->toBeTrue()
+        ->and($leftover->agents()->pluck('backend_id')->all())->toBe(array_keys(clonesSent()))
+        ->and(User::query()->activeDemoSandbox()->count())->toBe(0);
 });
 
-test('se una copia fallisce si cancella dal backend solo quella già fatta in questo tentativo', function () {
+test('se una copia fallisce si cancellano dal backend tutte le copie del tentativo, anche quella fallita', function (Closure $failure) {
     fakeBackend([
-        'POST agents/*/clone' => Http::sequence()
-            ->push(contract('agents.clone.201'), 201)
-            ->push(contract('error'), 500),
+        'POST agents/*/clone' => $failure(Http::sequence()->push(contract('agents.clone.201'), 201)),
         'DELETE agents/*' => Http::response(status: 204),
     ]);
 
@@ -154,12 +159,17 @@ test('se una copia fallisce si cancella dal backend solo quella già fatta in qu
 
     $this->assertGuest();
 
+    // Anche un timeout lato Laravel: il backend può aver finito la copia lo stesso.
     expect(User::count())->toBe(1)
         ->and(Agent::count())->toBe(2)
-        ->and(agentsDeleted())->toBe([array_key_first(clonesSent())]);
-});
+        ->and(clonesSent())->toHaveCount(2)
+        ->and(agentsDeleted())->toBe(array_keys(clonesSent()));
+})->with([
+    'errore del backend' => fn (ResponseSequence $clones) => $clones->push(contract('error'), 500),
+    'connessione persa' => fn (ResponseSequence $clones) => $clones->pushFailedConnection(),
+]);
 
-test('se il backend non cancella nemmeno la copia fatta, la sandbox resta scaduta per il prune', function () {
+test('se il backend non cancella nemmeno le copie, la sandbox resta scaduta per il prune', function () {
     fakeBackend([
         'POST agents/*/clone' => Http::sequence()
             ->push(contract('agents.clone.201'), 201)
@@ -171,9 +181,9 @@ test('se il backend non cancella nemmeno la copia fatta, la sandbox resta scadut
 
     $leftover = sandboxes()->sole();
 
-    // Resta solo l'agente copiato davvero: è quello da cancellare al prossimo giro.
+    // Restano tutti e due gli agenti: si riprova a cancellarli al prossimo giro.
     expect($leftover->demoSandboxExpired())->toBeTrue()
-        ->and($leftover->agents()->pluck('backend_id')->all())->toBe([array_key_first(clonesSent())]);
+        ->and($leftover->agents()->pluck('backend_id')->all())->toBe(array_keys(clonesSent()));
 });
 
 test('una password demo sbagliata non apre niente', function () {
@@ -229,6 +239,48 @@ test('oltre il tetto di sandbox aperte il login demo chiede di riprovare più ta
     expect(sandboxes())->toHaveCount(2);
 
     Http::assertNothingSent();
+});
+
+test('uno stesso IP apre poche sandbox all\'ora: poi il login demo chiede di aspettare, da un altro IP si entra', function () {
+    Config::set('stapply.demo.sandboxes_per_ip_per_hour', 2);
+    fakeBackend(cloneOk());
+
+    foreach ([1, 2] as $visit) {
+        demoLogin()->assertRedirect(route('dashboard', absolute: false));
+
+        // Lo stesso visitatore scarta il cookie e rientra.
+        $this->flushSession();
+        $this->app['auth']->forgetGuards();
+    }
+
+    demoLogin()->assertSessionHasErrors([
+        'email' => 'Da questa rete sono state aperte troppe demo nell\'ultima ora: riprova tra 60 minuti.',
+    ]);
+
+    $this->assertGuest();
+
+    expect(sandboxes())->toHaveCount(2)
+        ->and(clonesSent())->toHaveCount(4);
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7']);
+
+    demoLogin()->assertRedirect(route('dashboard', absolute: false));
+
+    expect(sandboxes())->toHaveCount(3);
+});
+
+test('un login demo fallito non consuma le sandbox dell\'IP', function () {
+    Config::set('stapply.demo.sandboxes_per_ip_per_hour', 1);
+    fakeBackend([
+        'POST agents/*/clone' => Http::sequence()
+            ->push(contract('error'), 500)
+            ->push(contract('agents.clone.201'), 201)
+            ->push(contract('agents.clone.201'), 201),
+        'DELETE agents/*' => Http::response(status: 204),
+    ]);
+
+    demoLogin()->assertSessionHasErrors('email');
+    demoLogin()->assertRedirect(route('dashboard', absolute: false));
 });
 
 test('le sandbox scadute non contano nel tetto', function () {

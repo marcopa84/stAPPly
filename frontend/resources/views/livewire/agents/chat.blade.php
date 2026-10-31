@@ -143,6 +143,8 @@
                         </div>
                     @endif
 
+                    {{-- Durante l'attesa la textarea è readonly e non disabled: un campo disattivato perde il focus,
+                         e il follow-up andrebbe scritto dopo un clic. requestSubmit() non guarda il pulsante: l'Invio si ferma qui. --}}
                     <form wire:submit="send" class="border-t border-zinc-200 p-3 dark:border-zinc-700">
                         <div class="flex items-end gap-2">
                             <div class="flex-1">
@@ -153,9 +155,9 @@
                                     maxlength="4000"
                                     placeholder="Scrivi una domanda…"
                                     aria-label="Messaggio per {{ $agent->name }}"
-                                    wire:loading.attr="disabled"
+                                    wire:loading.attr="readonly"
                                     wire:target="send, reply, retry"
-                                    x-on:keydown.enter="if (! $event.shiftKey && ! $event.isComposing) { $event.preventDefault(); $el.form.requestSubmit() }"
+                                    x-on:keydown.enter="if (! $event.shiftKey && ! $event.isComposing) { $event.preventDefault(); if (! $el.readOnly) $el.form.requestSubmit() }"
                                 />
                             </div>
 

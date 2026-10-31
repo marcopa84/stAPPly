@@ -191,6 +191,27 @@ it('codifica i segmenti del percorso', function () {
     Http::assertSentCount(1);
 });
 
+it('non manda segmenti che il client HTTP risolverebbe, come ".."', function (string $segment) {
+    // DELETE agents/vittima/tables/.. diventerebbe DELETE agents/vittima: tutti i dati dell'agente.
+    expect(fn () => $this->backend->deleteTable('vittima', $segment))
+        ->toThrow(InvalidArgumentException::class);
+
+    Http::assertNothingSent();
+})->with(['..', '.', '']);
+
+it('non segue i redirect del backend e li tratta come errori', function () {
+    fakeBackend([
+        'DELETE agents/vittima/tables/note_spese' => Http::response(status: 307, headers: ['Location' => 'http://backend.test/agents/vittima']),
+        'DELETE agents/vittima' => Http::response(status: 204),
+    ]);
+
+    expect(fn () => $this->backend->deleteTable('vittima', 'note_spese'))
+        ->toThrow(BackendException::class, 'Il backend ha risposto con un errore inatteso (codice 307).');
+
+    Http::assertSentCount(1);
+    expect(agentsDeleted())->toBe([]);
+});
+
 it('mostra all\'utente il detail del backend', function (int $status) {
     fakeBackend(['GET agents/demo-valtesa/documents' => Http::response(contract('error'), $status)]);
 

@@ -15,6 +15,16 @@ class DemoUnavailableException extends RuntimeException
         return new self('In questo momento la demo è piena: riprova più tardi.');
     }
 
+    public static function tooManyFromHere(int $seconds): self
+    {
+        $minutes = max(1, (int) ceil($seconds / 60));
+
+        return new self(
+            'Da questa rete sono state aperte troppe demo nell\'ultima ora: riprova tra '
+            .($minutes === 1 ? 'un minuto' : "{$minutes} minuti").'.'
+        );
+    }
+
     public static function backend(Throwable $previous): self
     {
         return new self(

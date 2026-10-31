@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 it('mostra la pagina di accesso in italiano', function () {
     $this->get(route('login'))
         ->assertOk()
@@ -24,3 +26,15 @@ it('traduce il messaggio di credenziali errate', function () {
         ->post(route('login.store'), ['email' => 'nessuno@stapply.test', 'password' => 'sbagliata'])
         ->assertSessionHasErrors(['email' => 'Queste credenziali non corrispondono ai nostri dati.']);
 });
+
+it('dà alle pagine delle impostazioni un titolo in italiano', function (string $route, string $title) {
+    $this->actingAs(User::factory()->create())
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route($route))
+        ->assertOk()
+        ->assertSeeInOrder(['<title>', "{$title} - ".config('app.name'), '</title>'], false);
+})->with([
+    'profilo' => ['profile.edit', 'Profilo'],
+    'sicurezza' => ['security.edit', 'Sicurezza'],
+    'aspetto' => ['appearance.edit', 'Aspetto'],
+]);

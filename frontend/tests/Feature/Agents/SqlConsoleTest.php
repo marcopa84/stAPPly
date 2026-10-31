@@ -45,7 +45,9 @@ test('accanto alla console c\'è lo schema delle tabelle', function () {
         ->assertSee('note_spese')
         ->assertSee('dipendente_id')
         ->assertSee('REAL')
-        ->assertSee('180 righe, da note_spese.csv');
+        ->assertSee('180 righe, da note_spese.csv')
+        // Un "Prova" per tabella: lo screen reader deve sapere quale.
+        ->assertSeeHtml('aria-label="Prova la tabella note_spese"');
 });
 
 test('un risultato tagliato dal backend lo dice', function () {

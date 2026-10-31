@@ -6,13 +6,10 @@ use App\Models\Agent;
 use App\Models\Conversation;
 use App\Services\Backend\BackendClient;
 use App\Services\Backend\BackendException;
-use App\Support\DemoAccount;
-use App\Support\DemoLimits;
+use App\Support\UsageLimits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -25,6 +22,11 @@ use Livewire\Component;
  * Un messaggio parte in due richieste: send() lo salva e torna subito, così compare
  * mentre l'agente lavora; reply() chiede la risposta al backend. Se il backend non
  * risponde la domanda resta salvata, con il motivo e il pulsante per riprovare.
+ *
+ * Il limite di messaggi si conta in send() e retry(), il costo sta in reply(): per
+ * questo reply() prende in carico la domanda nel DB (Message::claimForReply), e una
+ * domanda contata una volta arriva al backend una volta sola, anche se il browser
+ * rimanda la stessa richiesta.
  */
 class Chat extends Component
 {
@@ -40,8 +42,9 @@ class Chat extends Component
     public string $message = '';
 
     /**
-     * Acceso da send() e retry(), spento da reply(): così reply() chiama il backend una
-     * volta per ogni messaggio contato dal limite, e chiamarla dal browser non basta.
+     * Acceso da send() e retry(), spento da reply() o replyFailed(): mentre la risposta
+     * è attesa la pagina non offre Riprova. Non protegge il backend: vive nello snapshot,
+     * che il browser può rimandare; lo fa la presa in carico della domanda in reply().
      */
     #[Locked]
     public bool $awaitingReply = false;
@@ -139,7 +142,9 @@ class Chat extends Component
      */
     public function retry(): void
     {
-        if ($this->writableConversation()->pendingQuestion() === null) {
+        $question = $this->writableConversation()->pendingQuestion();
+
+        if ($question === null) {
             return;
         }
 
@@ -150,6 +155,9 @@ class Chat extends Component
 
             return;
         }
+
+        // Il tentativo è contato: reply() può prendere di nuovo in carico la domanda.
+        $question->releaseForReply();
 
         $this->error = null;
         $this->expectReply();
@@ -170,7 +178,8 @@ class Chat extends Component
         $conversation = $this->writableConversation();
         $question = $conversation->pendingQuestion();
 
-        if ($question === null) {
+        // Già presa in carico: è lo stesso snapshot rimandato, o arrivato due volte.
+        if ($question === null || ! $question->claimForReply()) {
             return;
         }
 
@@ -189,6 +198,21 @@ class Chat extends Component
         }
 
         $conversation->recordReply($reply);
+    }
+
+    /**
+     * La richiesta di reply() è fallita prima di arrivare a una risposta di Livewire
+     * (errore 500, sessione scaduta, rete): senza questa chiamata la pagina resterebbe
+     * in attesa, senza Riprova fino al ricaricamento.
+     */
+    public function replyFailed(): void
+    {
+        if (! $this->awaitingReply) {
+            return;
+        }
+
+        $this->awaitingReply = false;
+        $this->error = 'La risposta non è arrivata: puoi riprovare.';
     }
 
     /**
@@ -255,35 +279,15 @@ class Chat extends Component
     {
         $this->awaitingReply = true;
 
-        $this->js('$wire.reply()');
+        $this->js('$wire.reply().catch(() => $wire.replyFailed())');
     }
 
     /**
-     * Conta un messaggio nel limite al minuto dell'utente e, per le sandbox demo, in
-     * quello comune a tutte le sandbox. Se un limite è già raggiunto non conta niente
-     * e restituisce il motivo da mostrare.
+     * Conta un messaggio nei limiti dell'utente (e, per le sandbox, in quello comune a
+     * tutte). Se un limite è già raggiunto non conta niente e restituisce il motivo.
      */
     private function throttle(): ?string
     {
-        $key = 'chat-messages:'.Auth::id();
-
-        if (RateLimiter::tooManyAttempts($key, Config::integer('stapply.chat_messages_per_minute'))) {
-            $seconds = RateLimiter::availableIn($key);
-
-            return 'Hai mandato troppi messaggi in poco tempo: riprova tra '
-                .($seconds === 1 ? 'un secondo' : "{$seconds} secondi").'.';
-        }
-
-        if (DemoAccount::isSandbox(Auth::user())) {
-            $reason = DemoLimits::hitChatMessage();
-
-            if ($reason !== null) {
-                return $reason;
-            }
-        }
-
-        RateLimiter::hit($key);
-
-        return null;
+        return UsageLimits::hitChatMessage(Auth::user());
     }
 }

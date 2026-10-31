@@ -2,7 +2,8 @@
 
 namespace App\Livewire\Agents;
 
-use App\Support\DemoLimits;
+use App\Services\Backend\BackendClient;
+use App\Support\UsageLimits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -31,6 +32,11 @@ class Documents extends FilesSection
         $this->backend->deleteDocument($this->agent->backend_id, $id);
     }
 
+    protected function idPattern(): string
+    {
+        return BackendClient::DOCUMENT_ID_PATTERN;
+    }
+
     protected function storedCount(): int
     {
         return count($this->backend->documents($this->agent->backend_id));
@@ -38,7 +44,7 @@ class Documents extends FilesSection
 
     protected function maxFiles(): int
     {
-        return DemoLimits::maxDocuments(Auth::user());
+        return UsageLimits::maxDocuments(Auth::user());
     }
 
     protected function limitReachedMessage(): string

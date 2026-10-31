@@ -83,6 +83,21 @@ test('il markdown si vede, ma HTML grezzo e link javascript no', function () {
         ->not->toContain('javascript:');
 });
 
+test('le immagini diventano il loro testo alternativo: il browser non le scarica da solo', function () {
+    // Un documento con un'istruzione nascosta potrebbe far mettere i dati nell'URL di un'immagine.
+    $html = (string) answer(<<<'MD'
+        Totale rimborsi: 1234 €. ![](https://altrove.example/p.png?totale=1234)
+
+        ![grafico <b>ferie</b>](https://altrove.example/g.png "titolo")
+        MD)->answerHtml();
+
+    expect($html)
+        ->not->toContain('<img')
+        ->not->toContain('altrove.example')
+        ->toContain('Totale rimborsi: 1234 €.')
+        ->toContain('grafico ferie');
+});
+
 test('il passaggio citato viene da un documento caricato: si scappa', function () {
     $html = (string) answer('Vedi [doc-001].', [[
         'id' => 'doc-001',
@@ -122,6 +137,10 @@ test('nella pagina della chat la risposta con <script> e un [id] arriva scappata
         ->assertSee('&lt;b&gt;ferie&lt;/b&gt;', false)
         ->assertSee('[doc-404]')
         ->assertSee('class="citation-chip"', false);
+});
+
+test('le pagine caricano immagini solo da stAPPly', function () {
+    $this->get(route('home'))->assertHeader('Content-Security-Policy', "img-src 'self' data:");
 });
 
 test('ogni strada ha il suo colore nella traccia', function () {

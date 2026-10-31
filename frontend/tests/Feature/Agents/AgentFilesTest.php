@@ -5,10 +5,22 @@ use App\Livewire\Agents\Show;
 use App\Livewire\Agents\Tables;
 use App\Models\Agent;
 use App\Models\User;
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\Livewire;
+
+/**
+ * I file nella cartella temporanea degli upload di Livewire (nei test, un disco finto).
+ *
+ * @return list<string>
+ */
+function temporaryUploads(): array
+{
+    return FileUploadConfiguration::storage()->allFiles(FileUploadConfiguration::directory());
+}
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -73,7 +85,7 @@ test('il documento caricato va al backend in multipart con il nome originale', f
         ->call('upload')
         ->assertHasNoErrors()
         ->assertSet('file', null)
-        ->assertSet('uploads', 1)
+        ->assertSet('fileInputKey', 1)
         ->assertDispatched('toast-show');
 
     Http::assertSent(fn (Request $request) => $request->method() === 'POST'
@@ -100,20 +112,45 @@ test('la tabella caricata va al backend in multipart con il nome originale', fun
         && $request->hasFile('file', filename: 'Note spese.csv'));
 });
 
-test('i file non ammessi si fermano prima del backend', function (string $component, string $list, UploadedFile $file, string $message) {
+test('i file non ammessi si fermano appena scelti, prima del backend, e non restano sul server', function (string $component, string $list, UploadedFile $file, string $message) {
     fakeBackend(["GET agents/agente-di-prova/{$list}" => Http::response([$list => []])]);
 
     Livewire::test($component, ['agent' => $this->agent])
         ->set('file', $file)
-        ->call('upload')
         ->assertHasErrors('file')
-        ->assertSee($message);
+        ->assertSee($message)
+        ->assertSet('file', null)
+        ->assertSet('fileInputKey', 1);
+
+    expect(temporaryUploads())->toBe([]);
 
     Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
 })->with([
     'estensione da documento' => [Documents::class, 'documents', UploadedFile::fake()->create('foto.png', 10), 'carica un file .txt, .md, .pdf, .docx, .html o .htm'],
     'estensione da tabella' => [Tables::class, 'tables', UploadedFile::fake()->create('dati.json', 10), 'carica un file .csv o .xlsx'],
     'oltre 10 MB' => [Documents::class, 'documents', UploadedFile::fake()->create('manuale.pdf', 10 * 1024 + 1), 'supera il limite di 10 MB'],
+]);
+
+test('dopo l\'invio la copia temporanea del file si cancella, anche se il backend lo rifiuta', function (PromiseInterface $response) {
+    fakeBackend([
+        'GET agents/agente-di-prova/documents' => Http::response(['documents' => []]),
+        'POST agents/agente-di-prova/documents' => $response,
+    ]);
+
+    $section = Livewire::test(Documents::class, ['agent' => $this->agent])
+        ->set('file', UploadedFile::fake()->createWithContent('riservato.pdf', '%PDF-1.7 finto'));
+
+    // Il file e, accanto, i suoi metadati con il nome originale.
+    expect(temporaryUploads())->toHaveCount(2);
+
+    $section->call('upload')
+        ->assertSet('file', null)
+        ->assertSet('fileInputKey', 1);
+
+    expect(temporaryUploads())->toBe([]);
+})->with([
+    'caricato' => fn () => Http::response(contract('documents.upload.201'), 201),
+    'rifiutato' => fn () => Http::response(contract('error'), 415),
 ]);
 
 test("l'errore del backend sull'upload compare sotto il campo", function () {
@@ -160,6 +197,25 @@ test('una tabella si elimina dopo la conferma nel modal', function () {
 
     Http::assertSent(fn (Request $request) => $request->method() === 'DELETE');
 });
+
+test('un id che non ha la forma di docs/api.md non arriva al backend', function (string $component, string $id) {
+    fakeBackend([
+        'GET agents/agente-di-prova/documents' => Http::response(['documents' => []]),
+        'GET agents/agente-di-prova/tables' => Http::response(['tables' => []]),
+    ]);
+
+    Livewire::test($component, ['agent' => $this->agent])
+        ->call('confirmDelete', $id, 'trappola')
+        ->assertNotFound();
+
+    Http::assertNotSent(fn (Request $request) => $request->method() === 'DELETE');
+})->with([
+    'documento ".."' => [Documents::class, '..'],
+    'documento con estensione' => [Documents::class, 'regolamento.pdf'],
+    'documento con a capo' => [Documents::class, "regolamento\n"],
+    'tabella ".."' => [Tables::class, '..'],
+    'tabella con un percorso' => [Tables::class, 'note_spese/../..'],
+]);
 
 test('se il backend non elimina il documento il modal resta aperto con il motivo', function () {
     fakeBackend([

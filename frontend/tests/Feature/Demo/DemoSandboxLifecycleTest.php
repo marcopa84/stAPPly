@@ -5,6 +5,7 @@ use App\Models\Agent;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Demo\DemoSandbox;
 use App\Support\DemoAccount;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Console\Scheduling\Event;
@@ -59,6 +60,31 @@ describe('fine della sandbox', function () {
         'sandbox aperta' => fn () => User::factory()->demoSandbox()->create(),
         'utente registrato' => fn () => User::factory()->create(),
     ]);
+
+    test('anche quando il prune ha già cancellato la sandbox, la sessione torna alla home che spiega come ripartire', function () {
+        fakeBackend([
+            'POST agents/*/clone' => Http::response(contract('agents.clone.201'), 201),
+            'DELETE agents/*' => Http::response(status: 204),
+        ]);
+
+        demoLogin()->assertRedirect(route('dashboard', absolute: false));
+        $sandbox = auth()->user();
+
+        $this->travel(3)->hours();
+        expect(app(DemoSandbox::class)->prune())->toBe(1);
+
+        // La richiesta dopo rilegge l'utente dalla sessione, come farebbe il browser.
+        $this->app['auth']->forgetGuards();
+
+        $this->get(route('agents.index'))->assertRedirect(route('home', ['demo' => 'terminata']));
+
+        $this->assertGuest();
+
+        expect($sandbox->fresh())->toBeNull();
+
+        // Il segno della demo è andato via con la sessione: niente giri a vuoto.
+        $this->get(route('login'))->assertOk();
+    });
 
     test('senza il parametro la home non parla di demo terminata', function () {
         $this->get(route('home'))->assertOk()->assertDontSee(DemoAccount::ENDED_MESSAGE);
@@ -179,13 +205,15 @@ describe('dentro la sandbox', function () {
         $copy = Agent::factory()->for($sandbox)->create(['name' => 'Assistente Valtesa']);
         fakeBackend(['DELETE agents/'.$copy->backend_id => Http::response(status: 204)]);
 
-        Livewire::actingAs($sandbox)
+        $edit = Livewire::actingAs($sandbox)
             ->test(Edit::class, ['agent' => $copy])
             ->set('form.instructions', 'Rispondi solo sulle trasferte.')
             ->call('save')
-            ->assertHasNoErrors()
-            ->call('delete')
-            ->assertRedirect(route('agents.index'));
+            ->assertHasNoErrors();
+
+        expect($copy->fresh()->instructions)->toBe('Rispondi solo sulle trasferte.');
+
+        $edit->call('delete')->assertRedirect(route('agents.index'));
 
         expect($copy->fresh())->toBeNull()
             ->and(agentsDeleted())->toBe([$copy->backend_id]);

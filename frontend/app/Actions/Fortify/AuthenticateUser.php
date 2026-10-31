@@ -59,7 +59,7 @@ class AuthenticateUser
             return null;
         }
 
-        return DemoAccount::isTemplate($user) ? $this->openSandbox($user) : $user;
+        return DemoAccount::isTemplate($user) ? $this->openSandbox($request, $user) : $user;
     }
 
     private function userWithCredentials(string $email, string $password): ?User
@@ -72,13 +72,21 @@ class AuthenticateUser
     /**
      * Un errore sotto l'email e non un "credenziali sbagliate": le credenziali sono
      * giuste, e così il limite di tentativi di Fortify non conta un guasto del backend.
+     *
+     * Il segno in sessione resta anche quando il prune avrà cancellato la sandbox: così
+     * EndFinishedDemoSession sa spiegare che la demo è finita (il login lo conserva,
+     * il logout lo toglie insieme alla sessione).
      */
-    private function openSandbox(User $template): User
+    private function openSandbox(Request $request, User $template): User
     {
         try {
-            return $this->sandboxes->open($template);
+            $sandbox = $this->sandboxes->open($template, (string) $request->ip());
         } catch (DemoUnavailableException $e) {
             throw ValidationException::withMessages([Fortify::username() => $e->getMessage()]);
         }
+
+        $request->session()->put(DemoAccount::SANDBOX_SESSION_KEY, true);
+
+        return $sandbox;
     }
 }

@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Chiude la sessione di una sandbox scaduta, e quella del template, che dopo
+ * Chiude la sessione di una sandbox scaduta, anche se il prune l'ha già cancellata
+ * (resta il segno messo in sessione al login demo), e quella del template, che dopo
  * l'arrivo delle sandbox non si usa più direttamente (per esempio una sessione
  * aperta prima). Il visitatore torna alla home, che spiega come ripartire.
  *
@@ -27,7 +28,11 @@ class EndFinishedDemoSession
     {
         $user = $request->user();
 
-        if (! DemoAccount::isTemplate($user) && ! ($user instanceof User && $user->demoSandboxExpired())) {
+        $ended = DemoAccount::isTemplate($user)
+            || ($user instanceof User && $user->demoSandboxExpired())
+            || ($user === null && $request->session()->get(DemoAccount::SANDBOX_SESSION_KEY) === true);
+
+        if (! $ended) {
             return $next($request);
         }
 

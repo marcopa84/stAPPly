@@ -297,6 +297,76 @@ test('reply() senza un messaggio appena inviato non chiama il backend', function
     Http::assertNothingSent();
 });
 
+test('lo snapshot di send() rimandato non richiama il backend: un messaggio contato arriva al modello una volta', function () {
+    fakeBackend([
+        'POST agents/agente-di-prova/chat' => Http::sequence()
+            ->push(['detail' => 'Il provider del modello non risponde: riprova tra poco.'], 502)
+            ->push(contract('chat.200')),
+    ]);
+
+    $chat = openChat()->set('message', 'Massimale cena a Milano?')->call('send');
+    $afterSend = $chat->snapshot;
+
+    $chat->call('reply')->assertSet('error', 'Il provider del modello non risponde: riprova tra poco.');
+
+    // Il browser rimanda la richiesta di reply() con lo snapshot firmato ricevuto dopo send().
+    $chat->snapshot = $afterSend;
+    $chat->call('reply');
+
+    Http::assertSentCount(1);
+
+    // Riprova conta un altro messaggio nel limite, e solo allora la domanda riparte.
+    $chat->call('retry')->call('reply')->assertSee('40 € dal 1° luglio 2026');
+
+    Http::assertSentCount(2);
+    expect($this->conversation->messages()->pluck('role')->all())->toBe([MessageRole::User, MessageRole::Assistant]);
+});
+
+test('una domanda si prende in carico una volta sola, finché Riprova non la rimette in gioco', function () {
+    $question = $this->conversation->ask('Massimale cena a Milano?');
+
+    expect($question->claimForReply())->toBeTrue()
+        ->and($question->claimForReply())->toBeFalse();
+
+    $question->releaseForReply();
+
+    expect($question->claimForReply())->toBeTrue();
+});
+
+test('se la richiesta di reply() fallisce prima di una risposta, la pagina offre Riprova', function () {
+    openChat()
+        ->set('message', 'Massimale cena a Milano?')
+        ->call('send')
+        // È il browser a chiamare replyFailed() quando la promise di reply() fallisce (500, 419, rete).
+        ->assertJs('$wire.reply().catch(() => $wire.replyFailed())')
+        ->assertDontSee('Riprova')
+        ->call('replyFailed')
+        ->assertSet('awaitingReply', false)
+        ->assertSee('La risposta non è arrivata: puoi riprovare.')
+        ->assertSee('Riprova');
+
+    Http::assertNothingSent();
+});
+
+test('replyFailed() senza una risposta attesa non cambia niente', function () {
+    Message::factory()->for($this->conversation)->create(['content' => 'Domanda senza risposta']);
+
+    openChat()
+        ->call('replyFailed')
+        ->assertSet('error', null)
+        ->assertSee('Questa domanda è rimasta senza risposta');
+});
+
+test('mentre aspetta la risposta la textarea resta a fuoco: readonly, non disabled', function () {
+    preg_match('/<textarea[^>]*>/', openChat()->html(), $textarea);
+
+    // Un campo disattivato perde il focus; readonly no, ma allora l'Invio va fermato a mano.
+    expect($textarea[0])
+        ->toContain('wire:loading.attr="readonly"')
+        ->not->toContain('wire:loading.attr="disabled"')
+        ->toContain('if (! $el.readOnly) $el.form.requestSubmit()');
+});
+
 test('oltre il limite di messaggi al minuto la chat chiede di aspettare', function () {
     Config::set('stapply.chat_messages_per_minute', 2);
     fakeBackend(['POST agents/agente-di-prova/chat' => Http::response(contract('chat.200'))]);
