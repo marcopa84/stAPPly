@@ -233,11 +233,19 @@ Come si verificano i criteri del corso, applicati a ogni agente:
 | 2 | Ricerca con il nome del file | Nella traccia c'è la chiamata a `cerca_documenti`; ogni chip citato mostra file e passaggio | `test_indicizza_ogni_formato_del_seed`: ogni file del seed ritrovato dalla ricerca, con il nome |
 | 3 | Citazione, fuori tema | La risposta ha i chip `[id]`; una domanda fuori tema ha strada `nessuna` e nessun tool | `test_domanda_sui_documenti_cita_un_chunk`, `test_domanda_fuori_tema_rifiutata_senza_tool` |
 | 4 | Dati verificabili | La stessa domanda nella Console SQL, con una `SELECT` scritta a mano; una domanda mista ha strada `documenti+dati` | `test_domanda_che_chiede_documenti_e_dati_chiama_tutti_e_due_i_tool`: il numero confrontato con una somma fatta a mano sul CSV |
-| 5 | Griglia di 8 domande | Ogni domanda lanciata almeno due volte, in chat nuove. Domande e risposte vere dei due agenti demo sono in [`docs/griglia/`](docs/griglia/README.md); da `backend/`, `uv run python -m scripts.griglia <tema>` fa gli stessi lanci senza interfaccia e scrive il file dei risultati da compilare | `test_griglia.py`: composizione delle 8 domande più il follow-up, ogni passaggio nel suo chunk, ogni `SELECT` con le righe attese, istruzioni lette da `DemoSeeder.php` |
+| 5 | Griglia di 8 domande | Ogni domanda lanciata almeno due volte, in chat nuove. Domande e risposte vere dei due agenti demo sono in [`docs/griglia/`](docs/griglia/README.md); da `backend/`, `uv run python -m scripts.griglia <tema>` fa gli stessi lanci senza interfaccia e scrive il file dei risultati da compilare. Risultati e cura qui sotto | `test_griglia.py`: composizione delle 8 domande più il follow-up, ogni passaggio nel suo chunk, ogni `SELECT` con le righe attese, istruzioni lette da `DemoSeeder.php` |
 
-I test usano un modello finto. La griglia del criterio 5 è pronta, con le risposte vere
-ricontrollate dai test, e va lanciata con una chiave OpenAI: come si lancia, come si segna l'esito
-e come si prova una cura è in [`docs/griglia/README.md`](docs/griglia/README.md).
+I test usano un modello finto. La griglia del criterio 5 invece gira con il modello vero
+(`gpt-5.6-luna`, K 4):
+
+| Giro | Valtesa | Valdoria |
+|---|---|---|
+| Primo, due lanci per domanda | 18/18 | 17/18: la domanda 7 una volta comincia con «Sì» e poi dice che il prestito non si rinnova |
+| Dopo la cura, tre lanci per domanda | — (istruzioni invariate) | 27/27 |
+
+La cura è una riga nelle istruzioni di Valdoria (a una domanda sì/no si risponde prima «Sì» o
+«No», coerente con il resto). Risultati lancio per lancio, come si lancia la griglia e come si
+prova una cura: [`docs/griglia/README.md`](docs/griglia/README.md).
 
 ## Struttura
 

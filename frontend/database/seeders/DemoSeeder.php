@@ -35,6 +35,7 @@ class DemoSeeder extends Seeder
         - domande su servizi e regole (sedi e orari, iscrizione e tessere, prestiti e rinnovi, prestito interbibliotecario, biblioteca digitale, sala studio, domande frequenti): usa cerca_documenti;
         - domande sul catalogo, sui prestiti e sugli utenti iscritti: usa query_db.
         Se una domanda ha bisogno di tutte e due, usa tutti e due i tool.
+        A una domanda che chiede sì o no rispondi prima «Sì» o «No», e il resto della risposta deve dire la stessa cosa.
         TXT;
 
     public function run(): void

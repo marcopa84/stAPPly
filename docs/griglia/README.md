@@ -82,3 +82,30 @@ rilancia **tutta** la griglia e si confrontano i due file dei risultati. Ognuno 
 le istruzioni usate e in testa modello e K, quindi due giri restano confrontabili. Se la cura
 funziona e non rompe le altre domande, si riallinea Laravel con
 `php artisan db:seed --class=DemoSeeder` (da `frontend/`).
+
+## I giri fatti
+
+| File | Giro | Esito |
+|---|---|---|
+| [`risultati-valtesa-20261031-145630.md`](risultati-valtesa-20261031-145630.md) | Valtesa, primo giro, 2 lanci | 18/18 |
+| [`risultati-valdoria-20261031-145819.md`](risultati-valdoria-20261031-145819.md) | Valdoria, primo giro, 2 lanci | 17/18 |
+| [`risultati-valdoria-20261031-150153.md`](risultati-valdoria-20261031-150153.md) | Valdoria dopo la cura, 3 lanci | 27/27 |
+
+**Cosa succedeva.** Alla domanda 7 di Valdoria («Il prestito 620 si può rinnovare ancora?»), al
+secondo lancio, la risposta cominciava con «Sì.» e due righe dopo diceva che il prestito non è
+rinnovabile: i dati erano giusti (2 rinnovi già fatti, massimo 2 per i libri), la risposta no.
+
+**Cosa ho cambiato.** Una riga in fondo a `VALDORIA_INSTRUCTIONS`:
+
+> A una domanda che chiede sì o no rispondi prima «Sì» o «No», e il resto della risposta deve
+> dire la stessa cosa.
+
+**Le altre dopo la modifica.** Rilanciata tutta la griglia di Valdoria, con tre lanci invece di
+due: 27/27, la domanda 7 comincia sempre con «No». Le istruzioni di Valtesa non sono cambiate,
+quindi la sua griglia non è stata rilanciata.
+
+**Rimaste, senza errori ma da sapere.**
+- Nessuna risposta alla domanda 7 dice che il prestito è anche scaduto (18 ottobre 2026): l'agente
+  non conosce la data di oggi. Una data nelle regole fisse del backend lo permetterebbe.
+- Un follow-up può citare un chunk restituito nel turno precedente: la citazione è giusta, ma
+  l'interfaccia mostra come fonti solo i chunk di quel turno.
