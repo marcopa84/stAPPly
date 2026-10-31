@@ -1,16 +1,19 @@
+import io
 import re
 
+import docx
 import pytest
 
 from app.core import embeddings, ingest, storage, vectorstore
 from app.core.errors import (
     ContenutoNonValido,
     FileNonAmmesso,
+    FileTroppoGrande,
     LimiteRaggiunto,
     NonTrovato,
     ProviderNonDisponibile,
 )
-from tests.conftest import DOCUMENTI_SEED, contratto, forma
+from tests.conftest import DOCUMENTI_SEED, SEED, contratto, embed_finto, forma
 
 AGENTE = "demo-test"
 ISO_UTC = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ")
@@ -25,6 +28,32 @@ def paragrafi(parola: str, quanti: int) -> bytes:
 def file_dell_agente(agent_id: str = AGENTE) -> list[str]:
     cartella = storage.cartella_file(agent_id)
     return sorted(p.name for p in cartella.iterdir()) if cartella.exists() else []
+
+
+def chunk_dell_agente(agent_id: str = AGENTE) -> list[str]:
+    """I testi dei chunk dell'agente, in ordine di id."""
+    chunk = vectorstore.apri_collection(agent_id).get()
+    return [testo for _, testo in sorted(zip(chunk["ids"], chunk["documents"], strict=True))]
+
+
+def word(*blocchi: str | list[list[str]]) -> bytes:
+    """Un .docx in memoria: una stringa è un paragrafo, una lista di righe è una tabella."""
+    documento = docx.Document()
+    for blocco in blocchi:
+        if isinstance(blocco, str):
+            documento.add_paragraph(blocco)
+            continue
+        tabella = documento.add_table(rows=len(blocco), cols=len(blocco[0]))
+        for riga, valori in zip(tabella.rows, blocco, strict=True):
+            for cella, valore in zip(riga.cells, valori, strict=True):
+                cella.text = valore
+    buffer = io.BytesIO()
+    documento.save(buffer)
+    return buffer.getvalue()
+
+
+def vietato(testi: list[str]) -> list[list[float]]:
+    raise AssertionError("embedding non necessario")
 
 
 @pytest.mark.parametrize("percorso", DOCUMENTI_SEED, ids=lambda p: p.name)
@@ -119,6 +148,39 @@ def test_una_sostituzione_fallita_lascia_la_versione_precedente(
     assert (storage.cartella_file(AGENTE) / "regolamento.pdf").read_bytes() == originale
 
 
+def test_due_upload_insieme_non_superano_il_limite(imposta, monkeypatch):
+    imposta(max_documents_per_agent=1)
+
+    def embed_con_corsa(testi: list[str]) -> list[list[float]]:
+        # Un altro upload finisce mentre questo calcola gli embedding: il limite va
+        # ricontrollato sotto il blocco, non basta quello fatto all'inizio.
+        monkeypatch.setattr(embeddings, "embed", embed_finto)
+        ingest.indicizza_documento(AGENTE, "altro.md", b"Un altro documento.")
+        return embed_finto(testi)
+
+    monkeypatch.setattr(embeddings, "embed", embed_con_corsa)
+
+    with pytest.raises(LimiteRaggiunto):
+        ingest.indicizza_documento(AGENTE, "primo.md", b"Il primo documento.")
+    assert [d["document_id"] for d in ingest.lista_documenti(AGENTE)] == ["altro"]
+    assert file_dell_agente() == ["altro.md"]  # e nessun file provvisorio rimasto
+
+
+def test_agente_cancellato_durante_l_upload_non_lascia_dati(monkeypatch):
+    ingest.indicizza_documento(AGENTE, "faq.md", b"Domande frequenti sul prestito.")
+
+    def embed_e_cancella(testi: list[str]) -> list[list[float]]:
+        storage.cancella_agente(AGENTE)  # la DELETE di Laravel arriva durante gli embedding
+        return embed_finto(testi)
+
+    monkeypatch.setattr(embeddings, "embed", embed_e_cancella)
+
+    with pytest.raises(NonTrovato, match="cancellato durante il caricamento"):
+        ingest.indicizza_documento(AGENTE, "orari.md", b"Orari di apertura.")
+    assert vectorstore.collection_esistente(AGENTE) is None
+    assert not storage.cartella_agente(AGENTE).exists()
+
+
 def test_limite_documenti_salvo_sostituzione(imposta):
     imposta(max_documents_per_agent=2)
     ingest.indicizza_documento(AGENTE, "a.txt", b"Primo documento.")
@@ -128,6 +190,27 @@ def test_limite_documenti_salvo_sostituzione(imposta):
         ingest.indicizza_documento(AGENTE, "c.txt", b"Terzo documento.")
     assert ingest.indicizza_documento(AGENTE, "A.md", b"Primo, rivisto.")["replaced"] is True
     assert file_dell_agente() == ["a.md", "b.txt"]
+
+
+@pytest.mark.parametrize(
+    ("filename", "contenuto"),
+    [
+        ("lungo.md", paragrafi("ferie", 10)),  # oltre 3 × 200 caratteri: nemmeno si spezza
+        ("corti.txt", "\n\n".join(f"{i}. " + "x" * 98 for i in range(5)).encode()),
+        ("gonfio.docx", word(*[" ".join(["permessi"] * 40)] * 20)),  # pochi KB compressi
+    ],
+    ids=["testo-lungo", "troppi-chunk", "docx"],
+)
+def test_documento_troppo_lungo_413_prima_degli_embedding(
+    imposta, monkeypatch, filename, contenuto
+):
+    imposta(max_chunks_per_document=3, chunk_size=200)
+    monkeypatch.setattr(embeddings, "embed", vietato)
+
+    with pytest.raises(FileTroppoGrande, match="al massimo 3 passaggi da 200 caratteri"):
+        ingest.indicizza_documento(AGENTE, filename, contenuto)
+    assert ingest.lista_documenti(AGENTE) == []
+    assert file_dell_agente() == []
 
 
 def test_formato_non_ammesso_non_lascia_tracce():
@@ -147,6 +230,106 @@ def test_nome_file_con_percorso_resta_nella_cartella_dell_agente():
     risposta = ingest.indicizza_documento(AGENTE, "../../../evil.txt", b"Nessuna evasione.")
     assert risposta["filename"] == "evil.txt"
     assert file_dell_agente() == ["evil.txt"]
+
+
+def pagina_pdf(numero: int, corpo: str) -> str:
+    """Una pagina come la estrae pypdf: due righe di testata, il corpo, il numero di pagina."""
+    return f"Biblioteca civica — Regolamento dei prestiti\nUfficio prestiti\n{corpo}\n{numero}"
+
+
+def test_pdf_senza_testate_e_numeri_di_pagina_ma_con_tutte_le_celle():
+    tabella = "Tessera\nOrdinaria\n5\nStudenti\n8"  # pypdf estrae una cella per riga
+    pagine = [
+        pagina_pdf(n, f"Art. {n}\nTesto dell'art. {n}.\n{tabella}\nFine dell'art. {n}.")
+        for n in (1, 2, 3)
+    ]
+
+    testo = ingest.pulisci(pagine, ".pdf")
+
+    assert "Biblioteca civica" not in testo
+    assert "Ufficio prestiti" not in testo
+    assert testo.count(tabella) == 3  # celle ripetute e numeri restano
+    assert testo.endswith("\nFine dell'art. 3.")  # il numero di pagina no
+
+
+def test_pdf_tiene_le_celle_di_sole_cifre_sul_bordo_della_pagina():
+    # In fondo alla pagina 2 una cella «1» sta sopra il numero di pagina.
+    pagine = [pagina_pdf(1, "Testo."), pagina_pdf(2, "Riviste\n1"), pagina_pdf(3, "Altro.")]
+    assert ingest.pulisci(pagine, ".pdf") == "Testo.\nRiviste\n1\nAltro."
+    # Senza numeri di pagina, ogni pagina finisce con un importo: non cresce con la pagina.
+    importi = ["Spese della trasferta.\nCena\n120", "Albergo\n45", "Varie\nTreno\nTaxi\n300"]
+    assert ingest.pulisci(importi, ".pdf") == "\n".join(importi)
+
+
+def test_le_tabelle_del_pdf_del_seed_restano_intere():
+    percorso = SEED / "valdoria" / "documenti" / "regolamento-prestiti.pdf"
+    ingest.indicizza_documento(AGENTE, percorso.name, percorso.read_bytes())
+
+    chunk = chunk_dell_agente()
+    # Art. 5: prestiti contemporanei per tessera; art. 7: una cella in fondo alla pagina 2.
+    assert any("Ordinaria\n5\nStudenti\n8\nFamiglia\n10" in testo for testo in chunk)
+    assert any("Riviste\n1\n14 giorni" in testo for testo in chunk)
+    assert not any("approvato con delibera n. 14/2025" in testo for testo in chunk)  # testata
+
+
+def test_html_con_una_colonna_e_una_sezione_note_resta_intero():
+    contenuto = (
+        "<h1>Circolare rimborsi</h1>"
+        "<table><tr><th>Voce</th><th>Massimale</th><th>Note</th></tr>"
+        "<tr><td>Cena</td><td>40 euro</td><td>con ricevuta</td></tr></table>"
+        "<h2>Note</h2><p>Le spese oltre 500 euro richiedono il visto del direttore.</p>"
+        "<h2>Approvazione</h2><p>In vigore dal 1° luglio.</p>"
+    ).encode()
+
+    ingest.indicizza_documento(AGENTE, "circolare.html", contenuto)
+
+    assert chunk_dell_agente() == [
+        "Circolare rimborsi\nVoce\nMassimale\nNote\nCena\n40 euro\ncon ricevuta\nNote\n"
+        "Le spese oltre 500 euro richiedono il visto del direttore.\nApprovazione\n"
+        "In vigore dal 1° luglio."
+    ]
+
+
+@pytest.mark.parametrize(
+    "testo",
+    [
+        "Checklist di ingresso.\n*** END OF CHECKLIST ***\nAppendice: oltre 500 euro, visto.",
+        "Premessa: vale per tutte le sedi.\n*** START\n1. Si timbra all'ingresso.\n2. E all'uscita",
+    ],
+    ids=["end", "start"],
+)
+def test_txt_con_i_marcatori_di_gutenberg_resta_intero(testo):
+    ingest.indicizza_documento(AGENTE, "procedura.txt", testo.encode())
+    assert chunk_dell_agente() == [testo]  # e le righe di un elenco restano righe
+
+
+def test_docx_con_una_tabella():
+    contenuto = word(
+        "Massimali di spesa per le trasferte",
+        [["Voce", "Massimale"], ["Cena a Milano", "45 euro"], ["Hotel", "130 euro a notte"]],
+        "Per importi superiori serve l'autorizzazione.",
+    )
+
+    ingest.indicizza_documento(AGENTE, "massimali.docx", contenuto)
+
+    assert chunk_dell_agente() == [
+        "Massimali di spesa per le trasferte\nVoce | Massimale\nCena a Milano | 45 euro\n"
+        "Hotel | 130 euro a notte\nPer importi superiori serve l'autorizzazione."
+    ]
+
+
+def test_docx_fatto_solo_di_una_tabella_con_celle_unite():
+    documento = docx.Document()
+    tabella = documento.add_table(rows=2, cols=3)
+    tabella.cell(0, 0).merge(tabella.cell(0, 2)).text = "Orari della sede Centrale"
+    for cella, testo in zip(tabella.rows[1].cells, ("Lunedì", "9-13", "15-19"), strict=True):
+        cella.text = testo
+    buffer = io.BytesIO()
+    documento.save(buffer)
+
+    ingest.indicizza_documento(AGENTE, "orari.docx", buffer.getvalue())
+
+    assert chunk_dell_agente() == ["Orari della sede Centrale\nLunedì | 9-13 | 15-19"]
 
 
 def test_htm_e_trattato_come_html():
@@ -218,9 +401,6 @@ def test_isolamento_tra_agenti():
 
 
 def test_search_su_collection_vuota_non_calcola_embedding(monkeypatch):
-    def vietato(testi):
-        raise AssertionError("embedding non necessario")
-
     monkeypatch.setattr(embeddings, "embed", vietato)
     assert vectorstore.search(vectorstore.apri_collection(AGENTE), "ferie", 4) == []
 

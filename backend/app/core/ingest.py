@@ -13,6 +13,7 @@ import logging
 import os
 import shutil
 import tempfile
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -20,11 +21,28 @@ from chromadb.api.models.Collection import Collection
 
 from app.config import get_settings
 from app.core import embeddings, firme, ids, storage, vectorstore
-from app.core.clean import clean, pipeline_for
-from app.core.errors import ContenutoNonValido, LimiteRaggiunto, NonTrovato
+from app.core.clean import (
+    clean,
+    dehyphenate,
+    normalize_unicode,
+    normalize_whitespace,
+    strip_control_chars,
+)
+from app.core.errors import ContenutoNonValido, FileTroppoGrande, LimiteRaggiunto, NonTrovato
 from app.core.loaders import load
 
 logger = logging.getLogger(__name__)
+
+# Le ricette di clean.py (corso) erano pensate per tre testi precisi: un libro di Project
+# Gutenberg, un paper ICLR e una pagina di Wikipedia. Sui file degli utenti toglievano testo
+# vero: in un HTML tutto quello che segue una riga «Note» (anche l'intestazione di una colonna),
+# in un .txt quello fuori da «*** START» e «*** END», in un PDF le celle numeriche o ripetute
+# delle tabelle. Qui il testo si normalizza soltanto; dai PDF si tolgono testate e numeri di
+# pagina, riconosciuti pagina per pagina (`_senza_testate`).
+PULIZIA = [normalize_unicode, strip_control_chars, normalize_whitespace]
+PULIZIA_PDF = [normalize_unicode, strip_control_chars, dehyphenate, normalize_whitespace]
+RIGHE_DI_BORDO = 3  # le righe non vuote in testa e in coda alla pagina dove stanno le testate
+MIN_PAGINE_RIPETUTE = 3
 
 
 def chunk_recursive(testo: str, size: int) -> list[str]:
@@ -57,12 +75,14 @@ def indicizza_documento(agent_id: str, filename: str, contenuto: bytes) -> dict[
     se aveva un'altra estensione.
 
     Restituisce le chiavi di docs/contract/documents.upload.201.json. Solleva FileNonAmmesso,
-    FileTroppoGrande, LimiteRaggiunto, ContenutoNonValido o ProviderNonDisponibile.
+    FileTroppoGrande, LimiteRaggiunto, ContenutoNonValido o ProviderNonDisponibile, e
+    NonTrovato se l'agente viene cancellato mentre il documento si indicizza.
     """
     nome = ids.nome_file(filename)
     ext = firme.controlla_documento(nome, contenuto)
     document_id = ids.document_id(nome)
     cartella = storage.cartella_file(agent_id)
+    cancellazioni = storage.cancellazioni(agent_id)
     _controlla_limite(agent_id, document_id)  # subito, prima di pagare gli embedding
 
     # I loader vogliono un percorso: il file aspetta in un nome provvisorio finché non è
@@ -79,6 +99,9 @@ def indicizza_documento(agent_id: str, filename: str, contenuto: bytes) -> dict[
         vettori = embeddings.embed(pezzi)
 
         with storage.blocco_agente(agent_id):
+            # Prima di toccare Chroma: apri_collection ricreerebbe la collection di un agente
+            # cancellato mentre si calcolavano gli embedding.
+            storage.controlla_non_cancellato(agent_id, cancellazioni)
             # Di nuovo, sotto il blocco: un altro upload può essere finito nel frattempo.
             sostituito = _controlla_limite(agent_id, document_id)
             uploaded_at = storage.adesso()
@@ -172,18 +195,78 @@ def cancella_documento(agent_id: str, document_id: str) -> None:
         _cancella_originali(storage.cartella_file(agent_id), document_id)
 
 
+def pulisci(pagine: list[str], ext: str) -> str:
+    """Il testo di un file caricato, pronto per il chunking. `pagine` sono i testi che
+    restituisce il loader: uno solo, tranne per i PDF (uno per pagina)."""
+    if ext == ".pdf":
+        return clean("\n".join(_senza_testate(pagine)), PULIZIA_PDF)
+    return clean("\n".join(pagine), PULIZIA)
+
+
+def _senza_testate(pagine: list[str]) -> list[str]:
+    """Le pagine di un PDF senza testate, piè di pagina e numeri di pagina.
+
+    pypdf estrae le tabelle una cella per riga, quindi una regola sull'intero documento (come
+    remove_repeated_lines e remove_page_numbers del corso) toglie anche le celle con un numero
+    o con un valore ripetuto. Qui si guardano solo i bordi della pagina, cioè le prime e le
+    ultime RIGHE_DI_BORDO righe non vuote, e una riga si toglie se nella stessa posizione
+    rispetto al bordo c'è la stessa riga in almeno metà delle pagine (e in almeno
+    MIN_PAGINE_RIPETUTE). Una riga di sole cifre conta come «numero meno numero della pagina»:
+    il numero di pagina cresce con la pagina e si ripete, una cella di una tabella no.
+    """
+    righe = [pagina.split("\n") for pagina in pagine]
+    bordi = [_bordo(r, numero) for numero, r in enumerate(righe, start=1)]
+    conteggio = Counter(chiave for bordo in bordi for chiavi in bordo.values() for chiave in chiavi)
+    soglia = max(MIN_PAGINE_RIPETUTE, len(pagine) // 2)
+    return [
+        "\n".join(
+            riga
+            for i, riga in enumerate(r)
+            if all(conteggio[chiave] < soglia for chiave in bordo.get(i, ()))
+        )
+        for r, bordo in zip(righe, bordi, strict=True)
+    ]
+
+
+def _bordo(righe: list[str], numero_pagina: int) -> dict[int, list[tuple[int, str]]]:
+    """Le righe sul bordo della pagina, per indice, con le loro chiavi (posizione, testo): la
+    posizione è 0, 1, 2 dall'alto e -1, -2, -3 dal basso, e su una pagina corta una riga può
+    stare su tutti e due i bordi."""
+    piene = [i for i, riga in enumerate(righe) if riga.strip()]
+    posizioni = [*enumerate(piene[:RIGHE_DI_BORDO])]
+    posizioni += [(-k, i) for k, i in enumerate(reversed(piene[-RIGHE_DI_BORDO:]), start=1)]
+    bordo: dict[int, list[tuple[int, str]]] = {}
+    for posizione, i in posizioni:
+        testo = righe[i].strip()
+        if testo.isdecimal():
+            testo = f"#{int(testo) - numero_pagina}"
+        bordo.setdefault(i, []).append((posizione, testo))
+    return bordo
+
+
 def _chunk(percorso: Path, nome: str) -> list[str]:
-    """Testo pulito e diviso in chunk, senza pezzi vuoti."""
+    """Testo pulito e diviso in chunk, senza pezzi vuoti. FileTroppoGrande oltre
+    MAX_CHUNKS_PER_DOCUMENT chunk, prima di qualunque embedding."""
     try:
-        testo = "\n".join(pagina.text for pagina in load(str(percorso)))
-        testo = clean(testo.replace("\ufeff", ""), pipeline_for(str(percorso)))
+        testo = pulisci([pagina.text for pagina in load(str(percorso))], percorso.suffix)
     except Exception as errore:
         # pypdf, python-docx e lxml sollevano eccezioni di ogni tipo su un file rovinato.
         logger.warning("lettura di %s non riuscita: %r", nome, errore)
         raise ContenutoNonValido(
             "Il file non si riesce a leggere: potrebbe essere danneggiato o protetto da password."
         ) from errore
-    pezzi = [pezzo for pezzo in chunk_recursive(testo, get_settings().chunk_size) if pezzo.strip()]
+    settings = get_settings()
+    massimo = settings.max_chunks_per_document
+    troppo_lungo = FileTroppoGrande(
+        f"Il documento è troppo lungo: al massimo {massimo} passaggi da {settings.chunk_size} "
+        "caratteri. Dividilo in più file."
+    )
+    # Un testo che non può stare nel limite non si spezza nemmeno: può arrivare a 100 MB.
+    if len(testo) > massimo * settings.chunk_size:
+        raise troppo_lungo
+    pezzi = [pezzo for pezzo in chunk_recursive(testo, settings.chunk_size) if pezzo.strip()]
+    if len(pezzi) > massimo:
+        raise troppo_lungo
     if not pezzi:
         raise ContenutoNonValido(
             "Il file non contiene testo da indicizzare (un PDF scansionato, per esempio, "

@@ -1,6 +1,8 @@
 import csv
 import io
+import re
 import sqlite3
+import zipfile
 from collections import defaultdict
 from datetime import date, datetime, time
 
@@ -8,7 +10,7 @@ import pytest
 from openpyxl import Workbook
 
 from app.core import storage, tables
-from app.core.errors import ContenutoNonValido, LimiteRaggiunto, NonTrovato
+from app.core.errors import ContenutoNonValido, FileTroppoGrande, LimiteRaggiunto, NonTrovato
 from tests.conftest import SEED, contratto, forma, zip_con
 
 AGENTE = "demo-test"
@@ -31,6 +33,25 @@ def xlsx(*fogli: list[list[object]]) -> bytes:
     buffer = io.BytesIO()
     libro.save(buffer)
     return buffer.getvalue()
+
+
+def con_dimensione(contenuto: bytes, ref: str) -> bytes:
+    """Lo stesso .xlsx con un altro `<dimension ref>` nel primo foglio, come lo scrivono certi
+    generatori: openpyxl in sola lettura se ne fida."""
+    uscita = io.BytesIO()
+    with (
+        zipfile.ZipFile(io.BytesIO(contenuto)) as entrata,
+        zipfile.ZipFile(uscita, "w", zipfile.ZIP_DEFLATED) as nuovo,
+    ):
+        for voce in entrata.infolist():
+            dati = entrata.read(voce)
+            if voce.filename == "xl/worksheets/sheet1.xml":
+                dati, sostituiti = re.subn(
+                    rb'<dimension ref="[^"]*"', b'<dimension ref="%s"' % ref.encode(), dati
+                )
+                assert sostituiti == 1
+            nuovo.writestr(voce, dati)
+    return uscita.getvalue()
 
 
 def righe_db(sql: str, agent_id: str = AGENTE) -> list[tuple]:
@@ -182,6 +203,93 @@ def test_con_la_virgola_come_separatore_i_numeri_all_italiana_restano_testo():
     ]
 
 
+@pytest.mark.parametrize(
+    ("contenuto", "colonne", "righe"),
+    [
+        (
+            "Cognome, nome;Importo\nRossi;12,50\nBianchi;7,00\n",
+            [("cognome_nome", "TEXT"), ("importo", "REAL")],
+            [("Rossi", 12.5), ("Bianchi", 7.0)],
+        ),
+        ("importo\n1,5\n2,5\n", [("importo", "REAL")], [(1.5,), (2.5,)]),
+        ("nota\nRoma, centro\n", [("nota", "TEXT")], [("Roma, centro",)]),
+        (
+            '"Descrizione\nvoce";Importo\nCena;12,50\nTaxi;7\n',
+            [("descrizione_voce", "TEXT"), ("importo", "REAL")],
+            [("Cena", 12.5), ("Taxi", 7.0)],
+        ),
+        (
+            'id,nota\n1,"prima; seconda"\n2,terza\n',
+            [("id", "INTEGER"), ("nota", "TEXT")],
+            [(1, "prima; seconda"), (2, "terza")],
+        ),
+    ],
+    ids=[
+        "virgola-nell-intestazione",
+        "una-colonna-di-numeri",
+        "una-colonna-di-testo",
+        "intestazione-su-due-righe",
+        "virgola-con-punto-e-virgola-in-un-testo",
+    ],
+)
+def test_il_separatore_del_csv_si_sceglie_sui_record(contenuto, colonne, righe):
+    risposta = tables.importa_tabella(AGENTE, "dati.csv", contenuto.encode())
+    assert [(c["name"], c["type"]) for c in risposta["columns"]] == colonne
+    assert righe_db("SELECT * FROM dati") == righe
+
+
+def test_csv_salvato_da_excel_in_windows_1252():
+    contenuto = "Città;Quantità;Prezzo €\nForlì;3;1.234,50\n".encode("cp1252")
+    risposta = tables.importa_tabella(AGENTE, "Prezzi.csv", contenuto)
+    assert [c["name"] for c in risposta["columns"]] == ["citta", "quantita", "prezzo_"]
+    assert righe_db("SELECT * FROM prezzi") == [("Forlì", 3, 1234.5)]
+
+
+@pytest.mark.parametrize(
+    "ref", ["A1:B3", "A1", "A1:XFD201"], ids=["piccola", "una-cella", "enorme"]
+)
+def test_xlsx_con_il_tag_dimension_sbagliato(ref):
+    # Con A1:XFD201 ogni riga si allungherebbe a 16 384 celle: oltre MAX_CELLE in 200 righe.
+    righe = [["id", "nome"], *[[i, f"riga {i}"] for i in range(1, 201)]]
+
+    risposta = tables.importa_tabella(AGENTE, "dati.xlsx", con_dimensione(xlsx(righe), ref))
+
+    assert risposta["rows"] == 200
+    assert [c["name"] for c in risposta["columns"]] == ["id", "nome"]
+
+
+def test_xlsx_con_una_cella_in_fondo_a_ogni_riga_e_troppo_grande():
+    libro = Workbook()
+    for riga in range(1, 201):
+        libro.active.cell(row=riga, column=1, value=riga)
+        libro.active.cell(row=riga, column=16_384, value="x")  # colonna XFD
+    buffer = io.BytesIO()
+    libro.save(buffer)
+
+    with pytest.raises(FileTroppoGrande, match="al massimo 2.000.000 celle"):
+        tables.importa_tabella(AGENTE, "largo.xlsx", buffer.getvalue())
+    assert tables.lista_tabelle(AGENTE) == []
+
+
+def test_le_righe_corte_non_si_allungano_oltre_max_celle(monkeypatch):
+    monkeypatch.setattr(tables, "MAX_CELLE", 10)
+    # Letti sono 5 + 2 valori, ma allungate fino all'intestazione le due righe sono 10 celle.
+    assert tables.importa_tabella(AGENTE, "corte.csv", b"a;b;c;d;e\n1\n2\n")["rows"] == 2
+    with pytest.raises(FileTroppoGrande, match="al massimo 10 celle"):
+        tables.importa_tabella(AGENTE, "corte.csv", b"a;b;c;d;e\n1\n2\n3\n")
+
+
+def test_al_massimo_max_colonne_e_si_possono_interrogare():
+    larga = ";".join(f"c{i}" for i in range(tables.MAX_COLONNE)) + "\n" + "1;" * tables.MAX_COLONNE
+    risposta = tables.importa_tabella(AGENTE, "larga.csv", larga.encode())
+    assert len(risposta["columns"]) == tables.MAX_COLONNE
+    assert len(tables.esegui_select(AGENTE, "SELECT * FROM larga", 10)["columns"]) == 500
+
+    troppo = ";".join(["a"] * (tables.MAX_COLONNE + 1)) + "\n1\n"
+    with pytest.raises(ContenutoNonValido, match="501 colonne: al massimo .* 500"):
+        tables.importa_tabella(AGENTE, "troppo.csv", troppo.encode())
+
+
 def test_xlsx_primo_foglio_con_date_e_colonne_vuote_in_coda():
     contenuto = xlsx(
         [
@@ -249,8 +357,23 @@ def test_sostituzione_e_limite_tabelle(imposta):
 def test_una_sostituzione_malformata_lascia_la_tabella_di_prima():
     importa_note_spese()
     with pytest.raises(ContenutoNonValido):
-        tables.importa_tabella(AGENTE, "note_spese.csv", b"id\n1,2,3\n")
+        tables.importa_tabella(AGENTE, "note_spese.csv", b"id,nome\n1,2,3\n")
     assert righe_db("SELECT COUNT(*) FROM note_spese") == [(401,)]
+
+
+def test_agente_cancellato_durante_l_import_non_lascia_dati(monkeypatch):
+    importa_note_spese()
+    prepara = tables._prepara
+
+    def prepara_e_cancella(*argomenti):
+        storage.cancella_agente(AGENTE)  # la DELETE di Laravel arriva mentre si legge il file
+        return prepara(*argomenti)
+
+    monkeypatch.setattr(tables, "_prepara", prepara_e_cancella)
+
+    with pytest.raises(NonTrovato, match="cancellato durante il caricamento"):
+        tables.importa_tabella(AGENTE, "assenze.csv", b"id,tipo\n1,ferie\n")
+    assert not storage.cartella_agente(AGENTE).exists()
 
 
 def test_salva_e_atomica():
@@ -411,6 +534,30 @@ def test_esegui_select_interrompe_le_query_troppo_lunghe():
     )
     with pytest.raises(ContenutoNonValido, match="interrotta"):
         tables.esegui_select(AGENTE, infinita, 50, tempo_massimo=0.05)
+
+
+@pytest.mark.parametrize(
+    ("sql", "messaggio"),
+    [
+        # Un megabyte a valore costa una sola istruzione: il tempo massimo non lo ferma.
+        ("SELECT zeroblob(90000) AS a, zeroblob(90000) AS b FROM note_spese", "troppo grande"),
+        ("SELECT zeroblob(300000)", "too big"),
+        ("SELECT " + ", ".join(["1"] * 501), "too many columns"),
+    ],
+    ids=["risultato", "valore", "colonne"],
+)
+def test_esegui_select_ha_un_tetto_sulla_dimensione(sql, messaggio):
+    importa_note_spese()
+    with pytest.raises(ContenutoNonValido, match=messaggio):
+        tables.esegui_select(AGENTE, sql, 200)
+
+
+def test_esegui_select_conta_i_caratteri_come_escono_in_json():
+    importa_note_spese()
+    sql = "SELECT x'00ff' AS blob FROM note_spese LIMIT 3"  # 2 byte, 4 caratteri esadecimali
+    assert tables.esegui_select(AGENTE, sql, 10, max_caratteri=16)["rows"] == [["00ff"]] * 3
+    with pytest.raises(ContenutoNonValido, match="oltre 15 caratteri"):
+        tables.esegui_select(AGENTE, sql, 10, max_caratteri=15)
 
 
 def test_esegui_select_restituisce_valori_da_json():

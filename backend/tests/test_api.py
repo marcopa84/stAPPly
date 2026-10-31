@@ -74,6 +74,34 @@ def test_401_senza_la_chiave_giusta(imposta, intestazioni):
     assert risposta.json() == {"detail": "Chiave interna mancante o non valida."}
 
 
+ESEMPI_DI_ID = {"agent_id": "demo", "document_id": "faq", "table": "note_spese", "session_id": "s1"}
+# Dallo schema OpenAPI e non da app.routes, dove i router inclusi non hanno il percorso: così una
+# rotta nuova, anche di un router nuovo, entra nel test da sola.
+ROTTE_CON_CHIAVE = [
+    (metodo.upper(), percorso)
+    for percorso, operazioni in create_app().openapi()["paths"].items()
+    if percorso != "/health"
+    for metodo in operazioni
+]
+
+
+def test_le_rotte_piu_delicate_sono_tra_quelle_controllate():
+    assert {
+        ("POST", "/agents/{agent_id}/chat"),
+        ("POST", "/agents/{agent_id}/clone"),
+        ("DELETE", "/agents/{agent_id}"),
+        ("DELETE", "/agents/{agent_id}/sessions/{session_id}"),
+    } <= set(ROTTE_CON_CHIAVE)
+
+
+@pytest.mark.parametrize(("metodo", "percorso"), ROTTE_CON_CHIAVE, ids=" ".join)
+def test_ogni_rotta_tranne_health_vuole_la_chiave(imposta, metodo, percorso):
+    imposta(internal_api_key=CHIAVE)
+    risposta = TestClient(create_app()).request(metodo, percorso.format(**ESEMPI_DI_ID))
+    assert risposta.status_code == 401
+    assert risposta.json() == {"detail": "Chiave interna mancante o non valida."}
+
+
 def test_schema_openapi(client):
     schema = client.get("/openapi.json")
     assert schema.status_code == 200

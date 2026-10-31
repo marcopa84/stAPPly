@@ -21,6 +21,12 @@ _SINONIMI = {".htm": ".html"}
 FATTORE_DECOMPRESSIONE = 10
 MAX_VOCI_ZIP = 10_000
 
+# Excel su Windows salva i CSV in Windows-1252 se non si sceglie «CSV UTF-8»: per i CSV quella
+# codifica si accetta dopo UTF-8. Un testo con accenti in Windows-1252 non è quasi mai UTF-8
+# valido, quindi l'ordine non scambia l'una per l'altra.
+CODIFICHE = ("utf-8-sig",)
+CODIFICHE_CSV = ("utf-8-sig", "cp1252")
+
 _PARTE_PRINCIPALE = {".docx": "word/document.xml", ".xlsx": "xl/workbook.xml"}
 _DESCRIZIONI = {
     ".pdf": "un PDF valido",
@@ -68,8 +74,7 @@ def _controlla(filename: str, contenuto: bytes, ammesse: tuple[str, ...], per: s
         massimo = FATTORE_DECOMPRESSIONE * settings.max_upload_bytes
         valido = _zip_office(contenuto, _PARTE_PRINCIPALE[ext], massimo)
     else:
-        if not _testo_utf8(contenuto):
-            raise FileNonAmmesso(f"Il file non è {_DESCRIZIONI[ext]}: serve testo in UTF-8.")
+        testo(contenuto, ext)
         valido = True
 
     if not valido:
@@ -97,12 +102,13 @@ def _zip_office(contenuto: bytes, parte_principale: str, massimo: int) -> bool:
     return True
 
 
-def _testo_utf8(contenuto: bytes) -> bool:
-    """Testo UTF-8 valido (BOM ammesso) e senza byte NUL, che tradiscono un file binario."""
-    if b"\x00" in contenuto:
-        return False
-    try:
-        contenuto.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        return False
-    return True
+def testo(contenuto: bytes, ext: str) -> str:
+    """Il contenuto di un file di testo, decodificato: UTF-8 (BOM ammesso) e, per i CSV, anche
+    Windows-1252. FileNonAmmesso se non è testo: i byte NUL tradiscono un file binario."""
+    if b"\x00" not in contenuto:
+        for codifica in CODIFICHE_CSV if ext == ".csv" else CODIFICHE:
+            try:
+                return contenuto.decode(codifica)
+            except UnicodeDecodeError:
+                continue
+    raise FileNonAmmesso(f"Il file non è {_DESCRIZIONI[ext]}: serve testo in UTF-8.")

@@ -126,13 +126,20 @@ def nomi_colonne(intestazione: Sequence[object]) -> list[str]:
     """Le intestazioni rese identificatori SQL: stessa regola delle tabelle, `colonna_N` per
     un'intestazione vuota (N è la posizione, da 1), doppioni con `_2`, `_3`, …"""
     nomi: list[str] = []
+    usati: set[str] = set()
+    # Per ogni base l'ultima copia data: il doppione successivo riparte da lì e non da `_2`,
+    # così mille intestazioni uguali non costano un miliardo di confronti. Il controllo resta
+    # sui nomi usati: un nome già presente (`a_2`) o tagliato a 60 caratteri può coincidere.
+    ultima_copia: dict[str, int] = {}
     for posizione, valore in enumerate(intestazione, start=1):
         testo = "" if valore is None else str(valore).strip()
         base = _identificatore(testo) or f"colonna_{posizione}"
-        nome, copia = base, 1
-        while nome in nomi:
+        nome, copia = base, ultima_copia.get(base, 1)
+        while nome in usati:
             copia += 1
             suffisso = f"_{copia}"
             nome = base[: MAX_IDENTIFICATORE - len(suffisso)] + suffisso
+        ultima_copia[base] = copia
+        usati.add(nome)
         nomi.append(nome)
     return nomi

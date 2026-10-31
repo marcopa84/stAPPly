@@ -1,4 +1,5 @@
 import re
+import time
 
 import pytest
 
@@ -136,6 +137,16 @@ def test_nomi_colonne_senza_accenti_e_con_la_regola_di_sqlite():
 def test_nomi_colonne_doppioni_restano_entro_60_caratteri():
     nomi = ids.nomi_colonne(["x" * 70, "x" * 70, "x" * 70])
     assert nomi == ["x" * 60, "x" * 58 + "_2", "x" * 58 + "_3"]
+
+
+def test_nomi_colonne_con_migliaia_di_doppioni():
+    inizio = time.perf_counter()
+    nomi = ids.nomi_colonne(["a"] * 2000)
+    # Ripartendo da _2 a ogni doppione erano circa 20 secondi (tempo cubico): ora millisecondi.
+    assert time.perf_counter() - inizio < 1.0
+    assert nomi[:3] == ["a", "a_2", "a_3"]
+    assert nomi[-1] == "a_2000"
+    assert len(set(nomi)) == 2000
 
 
 def test_nomi_colonne_doppione_di_un_nome_generato():

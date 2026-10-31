@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 import openai
+import pytest
+from pydantic import ValidationError
 
 from app.config import BACKEND_DIR, Settings
 from tests.conftest import CHIAVE_OPENAI_FINTA
@@ -50,7 +52,14 @@ def test_valori_predefiniti():
     impostazioni = Settings(_env_file=None)
     assert (impostazioni.chunk_size, impostazioni.top_k, impostazioni.max_turns) == (500, 4, 10)
     assert impostazioni.max_documents_per_agent == 20
+    assert impostazioni.max_chunks_per_document == 2000
+    assert impostazioni.session_history_turns == 10
     assert impostazioni.max_tables_per_agent == 10
     assert (impostazioni.query_db_limit, impostazioni.sql_console_limit) == (50, 200)
     assert impostazioni.embedding_batch == 100
     assert impostazioni.embedding_model == "text-embedding-3-small"
+
+
+def test_la_memoria_della_chat_ha_almeno_un_turno():
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, session_history_turns=0)

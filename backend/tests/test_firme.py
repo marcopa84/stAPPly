@@ -74,6 +74,15 @@ def test_zip_bomb(imposta):
         firme.controlla_documento("bomba.docx", bomba)
 
 
+def test_un_csv_in_windows_1252_passa_un_testo_no():
+    # Excel su Windows salva così i CSV, se non si sceglie «CSV UTF-8».
+    contenuto = "Città;Prezzo €\nForlì;4,50\n".encode("cp1252")
+    assert firme.controlla_tabella("prezzi.csv", contenuto) == ".csv"
+    assert firme.testo(contenuto, ".csv") == "Città;Prezzo €\nForlì;4,50\n"
+    with pytest.raises(FileNonAmmesso, match="UTF-8"):
+        firme.controlla_documento("prezzi.txt", contenuto)
+
+
 def test_testo_utf8_con_bom_passa():
     assert firme.controlla_documento("note.txt", "\ufeffCaffè".encode()) == ".txt"
     assert firme.controlla_tabella("dati.csv", "\ufeffa;b\n1;2\n".encode()) == ".csv"
@@ -85,7 +94,8 @@ def test_testo_utf8_con_bom_passa():
         ("note.txt", "Caffè".encode("latin-1")),
         ("note.md", b"testo\x00binario"),
         ("pagina.html", b"\xff\xfe<\x00h\x00>\x00"),  # UTF-16
-        ("dati.csv", b"a,b\n\x80,1\n"),
+        ("dati.csv", b"a,b\n\x81,1\n"),  # 0x81 non è un carattere nemmeno in Windows-1252
+        ("dati.csv", b"a,b\n1,\x00\n"),
     ],
 )
 def test_testo_non_utf8_o_binario_viene_rifiutato(filename, contenuto):

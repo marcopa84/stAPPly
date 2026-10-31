@@ -16,12 +16,15 @@ from app.core.errors import ProviderNonDisponibile
 logger = logging.getLogger(__name__)
 
 # Molto meno dei 10 minuti predefiniti dell'SDK: Laravel aspetta il backend al massimo 120 s.
+# Un lotto lento si riprova una volta sola, quindi resta sotto un minuto (più l'attesa tra i
+# due tentativi); con i 2 retry predefiniti arriverebbe a 90 s.
 TIMEOUT_SECONDI = 30.0
+RIPROVE = 1
 
 
 @lru_cache
 def _client(api_key: str) -> openai.OpenAI:
-    return openai.OpenAI(api_key=api_key, timeout=TIMEOUT_SECONDI, max_retries=2)
+    return openai.OpenAI(api_key=api_key, timeout=TIMEOUT_SECONDI, max_retries=RIPROVE)
 
 
 def embed(testi: list[str]) -> list[list[float]]:

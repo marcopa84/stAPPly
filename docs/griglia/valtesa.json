@@ -48,12 +48,12 @@
         {
           "file": "procedura-ingresso-dotazioni.pdf",
           "chunk": "procedura-ingresso-dotazioni-013",
-          "passaggio": "generale 4 ore entro 30 giorni specifica rischio basso (uffici e Commerciale) 4 ore e-learning o aula entro 60 giorni specifica rischio alto (Produzione e Logistica)"
+          "passaggio": "Sicurezza, formazione generale 4 ore e-learning entro 30 giorni dall'assunzione Sicurezza, formazione specifica rischio basso (uffici e Commerciale) 4 ore"
         },
         {
           "file": "procedura-ingresso-dotazioni.pdf",
           "chunk": "procedura-ingresso-dotazioni-014",
-          "passaggio": "12 ore aula prima di essere adibiti alla mansione"
+          "passaggio": "e-learning o aula entro 60 giorni dall'assunzione Sicurezza, formazione specifica rischio alto (Produzione e Logistica) 12 ore aula prima di essere adibiti alla mansione"
         }
       ],
       "nota": "La tabella dei corsi è divisa tra due chunk. Nella griglia del docente, con K 4, erano 6° e 8° nella ricerca: la domanda è passata solo con K 8."

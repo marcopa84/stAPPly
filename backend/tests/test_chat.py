@@ -11,7 +11,7 @@ from agents import ModelTracing
 
 from app.core import agent, chat, embeddings, tables, vectorstore
 from app.core.errors import ContenutoNonValido, ProviderNonDisponibile
-from tests.conftest import NOTE_SPESE
+from tests.conftest import NOTE_SPESE, messaggi
 from tests.modello_finto import ModelloFinto, chiama, cita_il_primo_passaggio, scrive
 
 ISTRUZIONI = "Sei l'assistente dell'ufficio del personale di Valtesa S.r.l."
@@ -57,7 +57,7 @@ def test_domanda_sui_documenti_cita_un_chunk(valtesa):
     ]
     # Al modello i passaggi arrivano delimitati, con l'id da citare e il nome del file.
     output = modello.chiamate[1].output_tool()[0]
-    assert output.startswith(f"--- [{primo['id']}] (fonte: {primo['source']}) ---\n")
+    assert output.startswith(f'--- [{primo["id"]}] (fonte: "{primo["source"]}") ---\n')
 
 
 def test_domanda_fuori_tema_rifiutata_senza_tool(valtesa):
@@ -104,6 +104,18 @@ def test_un_errore_di_query_db_torna_al_modello_come_testo(valtesa):
     assert conta["rows"] == [[401]]  # dati intatti
 
 
+def test_un_risultato_troppo_grande_di_query_db_torna_al_modello_come_errore(valtesa):
+    sql = "SELECT zeroblob(20000) AS dati"  # 40 000 caratteri in esadecimale
+    modello = ModelloFinto([chiama("query_db", {"sql": sql})], scrive("Non ci sono riuscito."))
+
+    rispondi(valtesa, "Fammi vedere i dati", modello)
+
+    assert modello.chiamate[1].output_tool() == [
+        f"Errore: Risultato troppo grande (oltre {agent.MAX_CARATTERI_QUERY_DB} caratteri): "
+        "seleziona meno colonne o aggiungi un LIMIT."
+    ]
+
+
 def test_max_turns(valtesa, imposta):
     imposta(max_turns=2)
     sql = "SELECT COUNT(*) FROM note_spese WHERE stato = 'in attesa'"
@@ -142,6 +154,83 @@ def test_memoria_della_sessione(valtesa):
     # Un'altra sessione, o la stessa session_id su un altro agente, parte da zero.
     assert modello.chiamate[2].messaggi() == [("user", "Come mi chiamo?")]
     assert modello.chiamate[3].messaggi() == [("user", "Come mi chiamo?")]
+
+
+def test_al_modello_arrivano_solo_gli_ultimi_turni_della_sessione(valtesa, imposta):
+    imposta(session_history_turns=2)
+    sql = {"sql": SQL_IN_ATTESA}
+    modello = ModelloFinto(
+        [chiama("query_db", sql)],
+        scrive("Prima risposta."),
+        scrive("Seconda risposta."),
+        [chiama("query_db", sql)],
+        scrive("Terza risposta."),
+        scrive("Quarta risposta."),
+    )
+
+    for domanda in ("Prima?", "Seconda?", "Terza?", "Quarta?"):
+        rispondi(valtesa, domanda, modello)
+
+    ultima = modello.chiamate[-1]
+    assert ultima.messaggi() == [
+        ("user", "Seconda?"),
+        ("assistant", "Seconda risposta."),
+        ("user", "Terza?"),
+        ("assistant", "Terza risposta."),
+        ("user", "Quarta?"),
+    ]
+    # Il taglio cade prima di un messaggio dell'utente: il turno 3 arriva intero, con la
+    # chiamata di query_db e il suo output.
+    assert ultima.input[0]["role"] == "user"
+    chiamate = [i["call_id"] for i in ultima.input if i.get("type") == "function_call"]
+    risultati = [i["call_id"] for i in ultima.input if i.get("type") == "function_call_output"]
+    assert len(chiamate) == 1
+    assert chiamate == risultati
+    # In sessions.db resta tutta la conversazione.
+    domande = [m["content"] for m in messaggi(f"{valtesa}:s1") if m.get("role") == "user"]
+    assert domande == ["Prima?", "Seconda?", "Terza?", "Quarta?"]
+
+
+@pytest.mark.parametrize(("turni", "primo"), [(1, 4), (2, 2), (3, 0), (10, 0)])
+def test_ultimi_turni_taglia_prima_di_un_messaggio_dell_utente(turni, primo):
+    storia = [
+        {"role": "user", "content": "a"},
+        {"role": "assistant", "content": "b"},
+        {"role": "user", "content": "c"},
+        {"type": "function_call", "call_id": "1", "name": "query_db", "arguments": "{}"},
+        {"role": "user", "content": "d"},
+        {"type": "reasoning", "id": "rs_1", "summary": []},
+        {"role": "assistant", "content": "e"},
+    ]
+    nuovi = [{"role": "user", "content": "f"}]
+    assert chat.ultimi_turni(turni)(storia, nuovi) == storia[primo:] + nuovi
+
+
+class ModelloLento(ModelloFinto):
+    """Risponde con i passi scritti a mano, poi non risponde più: un provider bloccato."""
+
+    async def get_response(self, *argomenti, **opzioni):
+        if not self.passi:
+            await asyncio.sleep(60)
+        return await super().get_response(*argomenti, **opzioni)
+
+
+def test_un_turno_oltre_il_tempo_massimo_si_ferma_e_non_resta_in_memoria(valtesa, monkeypatch):
+    monkeypatch.setattr(chat, "TEMPO_MASSIMO_TURNO", 0.5)
+    modello = ModelloLento([chiama("query_db", {"sql": SQL_IN_ATTESA})])
+
+    with pytest.raises(ProviderNonDisponibile, match="non ha risposto in tempo"):
+        rispondi(valtesa, "Quante note spese sono in attesa?", modello)
+
+    assert len(modello.chiamate) == 1  # la seconda chiamata è rimasta in attesa
+    # In memoria resta la parte di turno già fatta (domanda e query), non una risposta che
+    # l'utente non ha mai visto.
+    memoria = messaggi(f"{valtesa}:s1")
+    assert [m.get("role") or m["type"] for m in memoria] == [
+        "user",
+        "function_call",
+        "function_call_output",
+    ]
 
 
 def test_le_istruzioni_finali_sono_quelle_di_laravel_piu_le_regole_fisse(valtesa):

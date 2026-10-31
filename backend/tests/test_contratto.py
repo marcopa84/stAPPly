@@ -127,7 +127,9 @@ def test_la_risposta_ha_la_forma_dell_esempio(esempio, client, monkeypatch, impo
 
 def test_forma_confronta_chiavi_e_tipi_a_ogni_livello():
     esempio = contratto("chat.200.json")
-    assert forma(esempio) == forma(esempio)
+    # Valori diversi con la stessa struttura hanno la stessa forma...
+    assert forma(esempio | {"answer": "altro testo", "route": "dati"}) == forma(esempio)
+    # ...una chiave mancante o un tipo diverso, no.
     senza_testo = esempio | {
         "sources": [{k: v for k, v in esempio["sources"][0].items() if k != "text"}]
     }

@@ -11,7 +11,7 @@ client del modello e chat.py passa il tracing a ogni run (`RunConfig`), senza to
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +32,12 @@ class Settings(BaseSettings):
     chunk_size: int = 500
     top_k: int = 4
     max_turns: int = 10
+    # I turni precedenti della sessione che arrivano al modello (app/core/chat.py).
+    session_history_turns: int = Field(default=10, ge=1)
     max_upload_mb: int = 10
+    # Oltre, un documento costerebbe troppi embedding e troppa memoria: un .docx di pochi KB
+    # si può gonfiare fino a FATTORE_DECOMPRESSIONE × MAX_UPLOAD_MB di testo.
+    max_chunks_per_document: int = 2000
     max_documents_per_agent: int = 20
     max_tables_per_agent: int = 10
     query_db_limit: int = 50

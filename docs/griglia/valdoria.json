@@ -2,7 +2,7 @@
   "agente": "demo-valdoria",
   "nome_agente": "Biblioteca di Valdoria",
   "costante_istruzioni": "VALDORIA_INSTRUCTIONS",
-  "origine": "Domande scritte per stAPPly sul modello della griglia del docente: stessi tipi e stesse trappole (una tabella del PDF che perde i numeri, una regola con un'eccezione, un titolo diviso tra più righe, un valore vuoto che in SQLite è NULL). Le risposte vere vengono dai file di backend/seed/valdoria: i passaggi sono quelli dei chunk indicizzati, i numeri da una SELECT scritta a mano sulle tabelle importate dal backend.",
+  "origine": "Domande scritte per stAPPly sul modello della griglia del docente: stessi tipi e stesse trappole (una tabella del PDF estratta una cella per riga, una regola con un'eccezione, un titolo diviso tra più righe, un valore vuoto che in SQLite è NULL). Le risposte vere vengono dai file di backend/seed/valdoria: i passaggi sono quelli dei chunk indicizzati, i numeri da una SELECT scritta a mano sulle tabelle importate dal backend.",
   "domande": [
     {
       "n": 1,
@@ -15,9 +15,14 @@
           "file": "faq.pdf",
           "chunk": "faq-001",
           "passaggio": "la tessera studenti, per studenti di scuola superiore e universitari fino a 26 anni, ne consente 8"
+        },
+        {
+          "file": "regolamento-prestiti.pdf",
+          "chunk": "regolamento-prestiti-007",
+          "passaggio": "Tessera Prestiti contemporanei Ordinaria 5 Studenti 8 Famiglia 10, complessivi per tutto il nucleo"
         }
       ],
-      "nota": "Nel Regolamento dei prestiti (art. 5) il numero sta in una tabella del PDF che, estratta, perde i valori di ordinaria e studenti: nel chunk regolamento-prestiti-009 resta solo «Ordinaria Studenti Famiglia 10». La risposta sta nelle FAQ."
+      "nota": "Nel Regolamento dei prestiti (art. 5) il numero sta in una tabella del PDF, che arriva al modello una cella per riga («Ordinaria 5 Studenti 8 Famiglia 10»): va letta a coppie, e chi sbaglia coppia risponde 5 o 10. Le FAQ lo dicono in una frase."
     },
     {
       "n": 2,
@@ -33,7 +38,7 @@
         },
         {
           "file": "regolamento-prestiti.pdf",
-          "chunk": "regolamento-prestiti-014",
+          "chunk": "regolamento-prestiti-013",
           "passaggio": "I documenti del prestito interbibliotecario si restituiscono solo al banco."
         }
       ],
@@ -151,7 +156,7 @@
         },
         {
           "file": "regolamento-prestiti.pdf",
-          "chunk": "regolamento-prestiti-009",
+          "chunk": "regolamento-prestiti-007",
           "passaggio": "Famiglia 10, complessivi per tutto il nucleo"
         }
       ]

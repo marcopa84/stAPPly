@@ -7,6 +7,7 @@ su una cartella a funzioni su un singolo file caricato.
 
 import csv
 import io
+import itertools
 import json
 import logging
 import math
@@ -25,13 +26,34 @@ from openpyxl import load_workbook
 
 from app.config import get_settings
 from app.core import firme, ids, storage
-from app.core.errors import ContenutoNonValido, LimiteRaggiunto, NonTrovato
+from app.core.errors import (
+    ContenutoNonValido,
+    ErroreStapply,
+    FileTroppoGrande,
+    LimiteRaggiunto,
+    NonTrovato,
+)
 
 logger = logging.getLogger(__name__)
 
 TEMPO_MASSIMO_QUERY = 5.0  # secondi: oltre, SQLite interrompe la query
 _ISTRUZIONI_TRA_CONTROLLI = 10_000  # ogni quante istruzioni della VM di SQLite si guarda l'ora
-_MAX_LUNGHEZZA_VALORE = 1_000_000  # byte di un testo o di un blob prodotto da una query
+# Colonne di una tabella importata e di un risultato. Un solo valore per tutti e due: SQLite
+# applica il limite delle query anche quando rilegge lo schema, quindi una tabella più larga
+# del limite non si potrebbe più interrogare.
+MAX_COLONNE = 500
+# Righe × colonne di una tabella importata: un CSV da 10 MB ne ha di solito meno di un milione.
+# Le righe corte si allungano fino all'intestazione, quindi senza tetto poche righe di
+# separatori diventerebbero miliardi di celle in memoria.
+MAX_CELLE = 2_000_000
+# Byte di un testo o di un blob prodotto da una query: più del campo più lungo che il modulo
+# csv accetta (131 072 caratteri). Una riga intera pesa al massimo MAX_COLONNE volte tanto.
+_MAX_LUNGHEZZA_VALORE = 200_000
+# Caratteri di un risultato (i blob contano in esadecimale, come escono in JSON): oltre, la
+# query è rifiutata invece di riempire la memoria del backend e della risposta a Laravel.
+MAX_CARATTERI_RISULTATO = 1_000_000
+_CANDIDATI_SEPARATORE = (",", ";")
+_RECORD_PER_IL_SEPARATORE = 20
 
 # Prima della parola chiave possono esserci spazi e commenti.
 _PREAMBOLO_SQL = re.compile(r"(?:\s+|--[^\n]*(?:\n|$)|/\*.*?\*/)*", re.DOTALL)
@@ -92,11 +114,13 @@ def importa_tabella(agent_id: str, filename: str, contenuto: bytes) -> dict[str,
     lo stesso nome viene sostituita.
 
     Restituisce le chiavi di docs/contract/tables.upload.201.json. Solleva FileNonAmmesso,
-    FileTroppoGrande, LimiteRaggiunto o ContenutoNonValido.
+    FileTroppoGrande (anche oltre MAX_CELLE), LimiteRaggiunto o ContenutoNonValido, e
+    NonTrovato se l'agente viene cancellato mentre il file si legge.
     """
     nome_file = ids.nome_file(filename)
     ext = firme.controlla_tabella(nome_file, contenuto)
     tabella = ids.nome_tabella(nome_file)
+    cancellazioni = storage.cancellazioni(agent_id)
     intestazione, righe = _leggi_csv(contenuto) if ext == ".csv" else _leggi_xlsx(contenuto)
     colonne, righe = _prepara(intestazione, righe)
     tipi = [tipo([riga[i] for riga in righe]) for i in range(len(colonne))]
@@ -104,6 +128,8 @@ def importa_tabella(agent_id: str, filename: str, contenuto: bytes) -> dict[str,
 
     percorso = storage.percorso_tabelle(agent_id)
     with storage.blocco_agente(agent_id):
+        # Prima di mkdir, che ricreerebbe la cartella di un agente cancellato nel frattempo.
+        storage.controlla_non_cancellato(agent_id, cancellazioni)
         presenti = _nomi_tabelle(percorso)
         sostituita = tabella in presenti
         massimo = get_settings().max_tables_per_agent
@@ -207,15 +233,21 @@ def schema_testo(agent_id: str) -> str:
 
 
 def esegui_select(
-    agent_id: str, sql: str, limite: int, tempo_massimo: float = TEMPO_MASSIMO_QUERY
+    agent_id: str,
+    sql: str,
+    limite: int,
+    tempo_massimo: float = TEMPO_MASSIMO_QUERY,
+    max_caratteri: int = MAX_CARATTERI_RISULTATO,
 ) -> dict[str, Any]:
     """Esegue una query di sola lettura sulle tabelle dell'agente.
 
     Restituisce {"columns", "rows", "truncated"} con al massimo `limite` righe. Le difese sono
     a strati: solo SELECT o WITH, una sola istruzione (la impone sqlite3), connessione
-    `mode=ro`, `PRAGMA query_only`, un authorizer che ammette solo letture e un limite di
-    tempo. NonTrovato se l'agente non ha tabelle; ContenutoNonValido, con il messaggio di
-    SQLite, se la query è rifiutata o fallisce: serve al modello per correggerla.
+    `mode=ro`, `PRAGMA query_only`, un authorizer che ammette solo letture, un limite di
+    tempo e uno sulla dimensione: colonne, valori e `max_caratteri` per tutto il risultato
+    (zeroblob() costa un'istruzione sola e produce un megabyte). NonTrovato se l'agente non
+    ha tabelle; ContenutoNonValido, con il messaggio di SQLite, se la query è rifiutata o
+    fallisce: serve al modello per correggerla.
     """
     percorso = storage.percorso_tabelle(agent_id)
     if not _nomi_tabelle(percorso):
@@ -240,15 +272,32 @@ def esegui_select(
         negate.append(azione)
         return sqlite3.SQLITE_DENY
 
+    righe: list[list[object]] = []
+    troncato = False
     try:
         with closing(_connetti_sola_lettura(percorso)) as con:
             con.execute("PRAGMA query_only = ON")
             con.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, _MAX_LUNGHEZZA_VALORE)
+            con.setlimit(sqlite3.SQLITE_LIMIT_COLUMN, MAX_COLONNE)
             con.set_authorizer(autorizza)
             con.set_progress_handler(controlla_tempo, _ISTRUZIONI_TRA_CONTROLLI)
             cursore = con.execute(sql)
             colonne = [d[0] for d in cursore.description or []]
-            righe = cursore.fetchmany(limite + 1)
+            caratteri = sum(len(c) for c in colonne)
+            for riga in cursore:
+                if len(righe) == limite:
+                    troncato = True
+                    break
+                valori = []
+                for valore in riga:
+                    valori.append(_valore_json(valore))
+                    caratteri += len(str(valori[-1]))
+                    if caratteri > max_caratteri:
+                        raise ContenutoNonValido(
+                            f"Risultato troppo grande (oltre {max_caratteri} caratteri): "
+                            "seleziona meno colonne o aggiungi un LIMIT."
+                        )
+                righe.append(valori)
     except sqlite3.Error as errore:
         if scaduta:
             messaggio = (
@@ -261,11 +310,7 @@ def esegui_select(
             messaggio = f"Query non eseguita: {errore}"
         raise ContenutoNonValido(messaggio) from errore
 
-    return {
-        "columns": colonne,
-        "rows": [[_valore_json(v) for v in riga] for riga in righe[:limite]],
-        "truncated": len(righe) > limite,
-    }
+    return {"columns": colonne, "rows": righe, "truncated": troncato}
 
 
 def _inizia_con_select(sql: str) -> bool:
@@ -286,16 +331,14 @@ def _valore_json(valore: object) -> object:
 def _leggi_csv(contenuto: bytes) -> tuple[Riga, list[tuple[int, Riga]]]:
     """Intestazione e righe (con il loro numero nel file); celle vuote → None. Con il punto e
     virgola come separatore, i numeri scritti all'italiana diventano numeri."""
-    testo = contenuto.decode("utf-8-sig")  # firme ha già controllato che sia UTF-8
-    prima_riga = next((riga for riga in io.StringIO(testo) if riga.strip()), "")
+    testo = firme.testo(contenuto, ".csv")  # UTF-8, oppure Windows-1252 come lo salva Excel
     righe: list[tuple[int, Riga]] = []
+    celle = 0
     try:
-        # Il separatore che divide l'intestazione in più colonne; a parità, la virgola.
-        separatore = max(
-            (",", ";"), key=lambda s: len(next(csv.reader([prima_riga], delimiter=s), []))
-        )
+        separatore = _separatore(testo)
         lettore = csv.reader(io.StringIO(testo, newline=""), delimiter=separatore)
         for riga in lettore:
+            celle = _conta_celle(celle, len(riga))
             valori = [v.strip() or None for v in riga]
             if any(v is not None for v in valori):  # righe vuote: si saltano
                 righe.append((lettore.line_num, valori))
@@ -308,6 +351,38 @@ def _leggi_csv(contenuto: bytes) -> tuple[Riga, list[tuple[int, Riga]]]:
     if separatore == ";":
         dati = _numeri_all_italiana(dati)
     return righe[0][1], dati
+
+
+def _separatore(testo: str) -> str:
+    """La virgola o il punto e virgola, scelto sui primi record del file: record e non righe,
+    così un'intestazione tra virgolette con un a capo (Alt+Invio in Excel) non inganna.
+
+    In ordine vince il separatore che divide tutti i record nello stesso numero di campi, più
+    di uno; poi quello che divide di più l'intestazione; poi quello che dà a tutti i record lo
+    stesso numero di campi (una sola colonna di numeri all'italiana, «1,5»). A parità, il punto
+    e virgola se c'è nel testo: è il separatore di Excel in italiano, dove la virgola sta nei
+    decimali e nei testi («Cognome, nome;Importo»).
+    """
+
+    def punteggio(separatore: str) -> tuple[bool, int, bool, bool]:
+        lettore = csv.reader(io.StringIO(testo, newline=""), delimiter=separatore)
+        pieni = (r for r in lettore if any(campo.strip() for campo in r))
+        campi = [len(r) for r in itertools.islice(pieni, _RECORD_PER_IL_SEPARATORE)] or [0]
+        coerente = len(set(campi)) == 1
+        return (coerente and campi[0] > 1, campi[0], coerente, separatore == ";" and ";" in testo)
+
+    return max(_CANDIDATI_SEPARATORE, key=punteggio)
+
+
+def _conta_celle(celle: int, nuove: int) -> int:
+    """Il conto delle celle lette fin qui; FileTroppoGrande oltre MAX_CELLE."""
+    celle += nuove
+    if celle > MAX_CELLE:
+        massimo = f"{MAX_CELLE:,}".replace(",", ".")  # 2.000.000, all'italiana
+        raise FileTroppoGrande(
+            f"La tabella è troppo grande: al massimo {massimo} celle (righe × colonne)."
+        )
+    return celle
 
 
 def _numeri_all_italiana(righe: list[tuple[int, Riga]]) -> list[tuple[int, Riga]]:
@@ -343,17 +418,27 @@ def _numeri_all_italiana(righe: list[tuple[int, Riga]]) -> list[tuple[int, Riga]
 def _leggi_xlsx(contenuto: bytes) -> tuple[Riga, list[tuple[int, Riga]]]:
     """Come `_leggi_csv`, dal primo foglio: le date diventano testo ISO (2026-07-15)."""
     righe: list[tuple[int, Riga]] = []
+    celle = 0
     try:
         # data_only: i valori calcolati delle formule, non il testo "=SOMMA(...)".
         libro = load_workbook(io.BytesIO(contenuto), read_only=True, data_only=True)
         try:
             # worksheets[0] e non .active: il foglio attivo è l'ultimo aperto, non il primo.
-            for numero, riga in enumerate(libro.worksheets[0].iter_rows(values_only=True), 1):
+            foglio = libro.worksheets[0]
+            # In sola lettura openpyxl si fida del tag <dimension> del foglio, che può mentire:
+            # più piccolo dei dati perde righe, enorme (A1:XFD…) allunga ogni riga a 16 384
+            # celle. Senza, ogni riga è lunga fino alla sua ultima cella.
+            foglio.reset_dimensions()
+            for numero, riga in enumerate(foglio.iter_rows(values_only=True), 1):
+                # Prima di convertire: anche una sola cella in colonna XFD allunga la riga.
+                celle = _conta_celle(celle, len(riga))
                 valori = [_valore_xlsx(v) for v in riga]
                 if any(v is not None for v in valori):
                     righe.append((numero, valori))
         finally:
             libro.close()
+    except ErroreStapply:
+        raise
     except Exception as errore:
         # openpyxl solleva errori di ogni tipo (zip, XML, fogli mancanti) su un file rovinato.
         logger.warning("lettura xlsx non riuscita: %r", errore)
@@ -387,10 +472,15 @@ def _prepara(intestazione: Riga, righe: list[tuple[int, Riga]]) -> tuple[list[st
     Le colonne senza intestazione e senza dati (i separatori in più di molti export) spariscono.
     """
     larghezza = len(intestazione)
+    if larghezza > MAX_COLONNE:
+        raise ContenutoNonValido(
+            f"La tabella ha {larghezza} colonne: al massimo se ne possono importare {MAX_COLONNE}."
+        )
+    _conta_celle(0, larghezza * len(righe))  # prima di allungare le righe corte
     pari: list[Riga] = []
     for numero, riga in righe:
-        while len(riga) > larghezza and riga[-1] is None:
-            riga = riga[:-1]
+        if len(riga) > larghezza:
+            riga = riga[: max(larghezza, _fine(riga))]
         if len(riga) > larghezza:
             raise ContenutoNonValido(
                 f"La riga {numero} ha {len(riga)} valori, ma l'intestazione ha {larghezza} colonne."
@@ -406,6 +496,11 @@ def _prepara(intestazione: Riga, righe: list[tuple[int, Riga]]) -> tuple[list[st
     ]
     colonne = ids.nomi_colonne([intestazione[i] for i in tenute])
     return colonne, [[riga[i] for i in tenute] for riga in pari]
+
+
+def _fine(riga: Riga) -> int:
+    """La lunghezza della riga senza le celle vuote in coda."""
+    return next((i + 1 for i in range(len(riga) - 1, -1, -1) if riga[i] is not None), 0)
 
 
 def _converti(valore: object, tipo_colonna: str) -> object:

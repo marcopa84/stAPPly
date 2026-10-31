@@ -3,7 +3,8 @@ servizio invece che da terminale.
 
 Ogni turno ricostruisce l'agente (istruzioni e tool possono essere cambiati da Laravel o da un
 upload) e riprende la memoria da sessions.db con la chiave `<agent_id>:<session_id>`: la stessa
-session_id su due agenti diversi resta due conversazioni separate.
+session_id su due agenti diversi resta due conversazioni separate. Al modello arrivano solo gli
+ultimi SESSION_HISTORY_TURNS turni (`ultimi_turni`), e un turno ha un tempo massimo.
 
 La risposta porta sempre la traccia (`tools`, `route`), come nel corso, e le `sources`: i chunk
 che il modello ha davvero citato tra quelli che cerca_documenti gli ha restituito.
@@ -12,6 +13,7 @@ che il modello ha davvero citato tra quelli che cerca_documenti gli ha restituit
 import asyncio
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -24,6 +26,7 @@ from agents import (
     RunConfig,
     Runner,
     SQLiteSession,
+    TResponseInputItem,
 )
 
 from app.config import get_settings
@@ -36,6 +39,13 @@ MESSAGGIO_MAX_TURNS = (
     "Non sono riuscito a completare la risposta entro il numero massimo di passaggi. "
     "Prova a riformulare la domanda."
 )
+
+# Il tetto di un turno intero (modello, tool, ripetizioni), sotto i 120 s che Laravel aspetta
+# il backend (STAPPLY_BACKEND_TIMEOUT). Senza, Laravel mostrerebbe il suo errore mentre il
+# backend continua a lavorare e salva nella sessione una risposta che nessuno ha letto. Un
+# tool già partito in un thread finisce per conto suo, ma il turno si chiude qui.
+TEMPO_MASSIMO_TURNO = 90.0
+MESSAGGIO_TEMPO_SCADUTO = "Il modello (OpenAI) non ha risposto in tempo: riprova tra poco."
 
 # Il contenuto di ogni coppia di quadre: ci possono essere più id ("[a-000, b-001]").
 _TRA_QUADRE = re.compile(r"\[([^\[\]]+)\]")
@@ -72,33 +82,39 @@ async def rispondi(
     chiave = ids.chiave_sessione(agent_id, session_id)
     contesto = agent.ContestoChat()
     sessione = SQLiteSession(chiave, storage.percorso_sessioni())
+    scadenza = asyncio.timeout(TEMPO_MASSIMO_TURNO)
     try:
-        # Costruire l'agente legge Chroma e SQLite, che bloccano: meglio fuori dall'event loop.
-        agente = await asyncio.to_thread(
-            agent.costruisci_agente,
-            agent_id,
-            agent_name,
-            instructions,
-            modello or agent.crea_modello(),
-        )
-        risultato = await Runner.run(
-            agente,
-            message,
-            context=contesto,
-            session=sessione,
-            max_turns=settings.max_turns,
-            run_config=RunConfig(
-                tracing_disabled=settings.openai_agents_disable_tracing,
-                workflow_name="stAPPly chat",
-                group_id=chiave,
-            ),
-        )
+        async with scadenza:
+            # Costruire l'agente legge Chroma e SQLite, che bloccano: meglio fuori dall'event loop.
+            agente = await asyncio.to_thread(
+                agent.costruisci_agente,
+                agent_id,
+                agent_name,
+                instructions,
+                modello or agent.crea_modello(),
+            )
+            risultato = await Runner.run(
+                agente,
+                message,
+                context=contesto,
+                session=sessione,
+                max_turns=settings.max_turns,
+                run_config=RunConfig(
+                    tracing_disabled=settings.openai_agents_disable_tracing,
+                    workflow_name="stAPPly chat",
+                    group_id=chiave,
+                    session_input_callback=ultimi_turni(settings.session_history_turns),
+                ),
+            )
     except MaxTurnsExceeded as errore:
         # Niente risposta, ma la traccia di quello che ha fatto finora serve a capire perché.
         tools = agent.tool_chiamati(errore.run_data.new_items if errore.run_data else [])
         return RispostaChat(MESSAGGIO_MAX_TURNS, "max_turns", agent.strada(tools), tools, [])
     except Exception as errore:
-        dominio = errore_di_dominio(errore)
+        if scadenza.expired():
+            dominio: ErroreStapply | None = ProviderNonDisponibile(MESSAGGIO_TEMPO_SCADUTO)
+        else:
+            dominio = errore_di_dominio(errore)
         if dominio is None or dominio is errore:
             raise
         if isinstance(dominio, ModelloNonDisponibile):
@@ -119,6 +135,29 @@ async def rispondi(
     return RispostaChat(
         answer, "ok", agent.strada(tools), tools, fonti(answer, contesto.chunk_restituiti)
     )
+
+
+def ultimi_turni(
+    turni: int,
+) -> Callable[[list[TResponseInputItem], list[TResponseInputItem]], list[TResponseInputItem]]:
+    """Il `session_input_callback` dell'SDK che manda al modello solo gli ultimi `turni` turni
+    della sessione, seguiti dal messaggio nuovo. In sessions.db resta tutta la storia.
+
+    Senza un limite ogni messaggio rimanda al modello l'intera conversazione, output dei tool
+    compresi: il costo di un turno cresce con la chat, finché supera la finestra di contesto.
+    Si taglia solo all'inizio di un turno, cioè prima di un messaggio dell'utente: un limite
+    sul numero di item (SessionSettings) potrebbe cadere tra un `reasoning` e la
+    `function_call` che ne dipende, o tra una chiamata e il suo output.
+    """
+
+    def combina(
+        storia: list[TResponseInputItem], nuovi: list[TResponseInputItem]
+    ) -> list[TResponseInputItem]:
+        inizi = [i for i, item in enumerate(storia) if item.get("role") == "user"]
+        primo = inizi[-turni] if len(inizi) > turni else 0
+        return storia[primo:] + nuovi
+
+    return combina
 
 
 def errore_di_dominio(errore: BaseException) -> ErroreStapply | None:

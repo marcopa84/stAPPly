@@ -14,6 +14,7 @@ I metadati delle tabelle stanno fuori da tables.db di proposito: query_db vede s
 import shutil
 import sqlite3
 import threading
+from collections import Counter
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
@@ -21,6 +22,7 @@ from pathlib import Path
 
 from app.config import get_settings
 from app.core import ids
+from app.core.errors import NonTrovato
 
 # Le tabelle che SQLiteSession crea in sessions.db (agents/memory/sqlite_session.py, SDK 0.22.3).
 # Le chiavi esterne non sono attive, quindi l'ON DELETE CASCADE dichiarato non scatta.
@@ -64,6 +66,7 @@ def adesso() -> str:
 
 _blocchi: dict[str, threading.RLock] = {}
 _guardia_blocchi = threading.Lock()
+_cancellazioni: Counter[str] = Counter()
 
 
 @contextmanager
@@ -79,6 +82,24 @@ def blocco_agente(agent_id: str) -> Iterator[None]:
         yield
 
 
+def cancellazioni(agent_id: str) -> int:
+    """Quante volte l'agente è stato cancellato da quando il processo è partito.
+
+    Un upload lo legge prima del lavoro lungo (embedding, lettura del file) e lo ricontrolla
+    sotto il blocco con `controlla_non_cancellato`: così una DELETE arrivata nel frattempo
+    non lascia dati di un agente che per Laravel non esiste più. Una DELETE arrivata prima
+    dell'upload resta indistinguibile da un agente nuovo: il backend non conosce gli agenti.
+    """
+    return _cancellazioni[agent_id]
+
+
+def controlla_non_cancellato(agent_id: str, cancellazioni_prima: int) -> None:
+    """NonTrovato se l'agente è stato cancellato dopo `cancellazioni_prima`. Va chiamata
+    tenendo il blocco dell'agente, che cancella_agente prende per tutta la cancellazione."""
+    if _cancellazioni[agent_id] != cancellazioni_prima:
+        raise NonTrovato("L'agente è stato cancellato durante il caricamento.")
+
+
 def cancella_sessione(agent_id: str, session_id: str) -> None:
     """Dimentica una conversazione. Nessun errore se non c'era."""
     _cancella_sessioni("session_id = ?", (ids.chiave_sessione(agent_id, session_id),))
@@ -92,6 +113,7 @@ def cancella_agente(agent_id: str) -> None:
 
     prefisso = f"{ids.controlla_agent_id(agent_id)}:"
     with blocco_agente(agent_id):
+        _cancellazioni[agent_id] += 1
         vectorstore.cancella_collection(agent_id)
         cartella = cartella_agente(agent_id)
         if cartella.exists():
