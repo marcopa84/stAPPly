@@ -1,0 +1,8 @@
+{
+  "columns": ["stato", "quante", "totale"],
+  "rows": [
+    ["approvata", 98, 4120.5],
+    ["in attesa", 56, 2184.4]
+  ],
+  "truncated": false
+}

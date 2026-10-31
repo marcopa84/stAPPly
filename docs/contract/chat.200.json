@@ -1,0 +1,16 @@
+{
+  "answer": "Per una cena in trasferta a Milano il massimale è 40 € dal 1° luglio 2026 (35 € fino al 30 giugno) [circolari-personale-2026-004].",
+  "status": "ok",
+  "route": "documenti",
+  "tools": [
+    {"name": "cerca_documenti", "arguments": {"domanda": "massimale cena trasferta Milano"}}
+  ],
+  "sources": [
+    {
+      "id": "circolari-personale-2026-004",
+      "document_id": "circolari-personale-2026",
+      "filename": "circolari-personale-2026.html",
+      "text": "Circolare 7/2026. Dal 1° luglio 2026 il massimale per la cena in trasferta sale da 35 € a 40 €."
+    }
+  ]
+}
