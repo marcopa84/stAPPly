@@ -35,30 +35,32 @@ Aggiornato il 1-11-2026.
   - limiti per IP alle sandbox e limiti di costo per tutti gli utenti;
   - registrazione con limite di tentativi.
 
+- **Verifica finale (1-11-2026)** su un clone pulito da GitHub, rifacendo i passi della CI:
+  backend 440 test con `CI=1` (nessuno saltato) e ruff pulito; frontend con build, Pint e PHPStan
+  puliti e 288 test; `migrate --seed` su un DB nuovo crea il template e i due agenti demo.
+- **Prova dal vivo della sandbox** (backend vero con le tabelle seed, frontend con
+  `php artisan serve`, login con curl, senza OpenAI):
+  - due login demo danno due sandbox distinte, con cloni distinti, e ogni clone ha le sue tabelle;
+  - la dashboard mostra l'avviso della sandbox;
+  - dopo logout e `stapply:prune-demo` la sandbox e i suoi cloni nel backend spariscono, mentre
+    l'altra sandbox e il template restano intatti.
+
+  Lo script è in `scratchpad/e2e_sandbox.sh` della sessione, non nel repo.
+
 ## Da fare
 
-1. **Verifica finale**, non ancora rifatta dopo le correzioni:
-   - suite e lint dei due lati;
-   - i passi della CI su una copia pulita (`git ls-files`);
-   - `migrate --seed` su un DB nuovo;
-   - prova dal vivo del clone con un backend su una porta tra 8020 e 8040 e `DATA_DIR`
-     temporanea.
-2. **Rilanciare `seed_demo`** (`cd backend && uv run python -m scripts.seed_demo`): la pulizia dei PDF
+1. **Rilanciare `seed_demo`** (`cd backend && uv run python -m scripts.seed_demo`): la pulizia dei PDF
    è cambiata, e i chunk in `backend/data` sono indicizzati con quella vecchia.
-3. **Prova completa della sandbox.** Nel browser, se Chrome è collegato, facendo prima logout dal
-   template; altrimenti con uno script contro il backend vero. Controllare che:
-   - due accessi demo diano due sandbox distinte, con cloni distinti;
-   - una modifica in una sandbox non si veda nell'altra;
-   - dopo logout e `php artisan stapply:prune-demo` i cloni spariscano dal backend;
-   - `demo-valtesa` e `demo-valdoria` abbiano ancora documenti e tabelle.
-4. **Griglia vera, criterio 5** (serve la chiave):
+2. **Prova della sandbox nel browser**, quando Chrome è collegato, facendo prima logout dal
+   template (la prova con curl è già passata).
+3. **Griglia vera, criterio 5** (serve la chiave):
    - `cd backend && uv run python -m scripts.griglia valtesa`, poi lo stesso con `valdoria`;
    - compilare l'esito nei file `docs/griglia/risultati-*.md`;
    - una cura alla volta in `DemoSeeder.php` (per esempio la riga sugli omonimi, come la cura 1
      del docente); rilanciare tutte e due le griglie, poi `php artisan db:seed --class=DemoSeeder`;
    - committare i risultati prima e dopo la cura e scrivere il punteggio nella tabella dei
      criteri del README.
-5. **CLAUDE.md:** aggiornare la riga «Utente demo da seeder…» con la sandbox (una copia degli
+4. **CLAUDE.md:** aggiornare la riga «Utente demo da seeder…» con la sandbox (una copia degli
    agenti demo per ogni accesso, reset al prossimo login, istruzioni ufficiali in `DemoSeeder`).
 
 ## Decisioni aperte (di Marco)
