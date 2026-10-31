@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+# DATA_DIR di sviluppo (vettori, tabelle, sessioni): solo backend/data, non ogni cartella "data".
+/data/
