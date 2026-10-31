@@ -1,0 +1,154 @@
+{
+  "agente": "demo-valtesa",
+  "nome_agente": "Assistente Valtesa",
+  "costante_istruzioni": "VALTESA_INSTRUCTIONS",
+  "origine": "Le domande della griglia del docente (solutions/griglia.md, Modulo 3 · Lezione 12). Ogni risposta vera è ricontrollata sui file di backend/seed/valtesa: i passaggi sono quelli dei chunk indicizzati, i numeri vengono da una SELECT scritta a mano sulle tabelle importate dal backend.",
+  "domande": [
+    {
+      "n": 1,
+      "tipo": "documenti",
+      "domanda": "Qual è il massimale per una cena in trasferta a Milano?",
+      "risposta_vera": "35,00 € per le cene fino al 30 giugno 2026, 40,00 € per quelle dal 1° luglio 2026 (Circolare n. 7/2026, che aggiorna l'art. 6 della Policy trasferte e note spese).",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "circolari-personale-2026.html",
+          "chunk": "circolari-personale-2026-019",
+          "passaggio": "dal 1° luglio 2026 il massimale di rimborso della cena nelle città di fascia A (Milano e Roma) passa da 35,00 € a 40,00 € per persona."
+        },
+        {
+          "file": "circolari-personale-2026.html",
+          "chunk": "circolari-personale-2026-020",
+          "passaggio": "Per le cene fino al 30 giugno 2026 resta valido il massimale di 35,00 € previsto dall'art. 6 della Policy trasferte e note spese"
+        }
+      ],
+      "nota": "La tabella dell'art. 6 della Policy (chunk policy-trasferte-note-spese-012) dice ancora 35,00 €: una risposta che dà solo quel valore è incompleta."
+    },
+    {
+      "n": 2,
+      "tipo": "documenti",
+      "domanda": "Se sono in trasferta mi spetta il buono pasto?",
+      "risposta_vera": "Sì, se la giornata di lavoro è di almeno 6 ore e non chiedi il rimborso del pranzo in nota spese; se lo chiedi, il buono non spetta. La cena rimborsata non conta.",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "regolamento-welfare-buoni-pasto.docx",
+          "chunk": "regolamento-welfare-buoni-pasto-006",
+          "passaggio": "Se il dipendente inserisce in nota spese il pranzo di quella giornata, il buono non spetta; se non chiede il rimborso del pranzo, il buono spetta purché la giornata lavorativa sia di almeno 6 ore. La cena rimborsata in trasferta non incide sul buono pasto."
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "tipo": "documenti",
+      "domanda": "Sono appena stato assunto: entro quando devo fare i corsi sulla sicurezza?",
+      "risposta_vera": "La formazione generale (4 ore) entro 30 giorni; la specifica dipende dal reparto: rischio basso (uffici e Commerciale, 4 ore) entro 60 giorni, rischio alto (Produzione e Logistica, 12 ore) prima di essere adibiti alla mansione.",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "procedura-ingresso-dotazioni.pdf",
+          "chunk": "procedura-ingresso-dotazioni-013",
+          "passaggio": "generale 4 ore entro 30 giorni specifica rischio basso (uffici e Commerciale) 4 ore e-learning o aula entro 60 giorni specifica rischio alto (Produzione e Logistica)"
+        },
+        {
+          "file": "procedura-ingresso-dotazioni.pdf",
+          "chunk": "procedura-ingresso-dotazioni-014",
+          "passaggio": "12 ore aula prima di essere adibiti alla mansione"
+        }
+      ],
+      "nota": "La tabella dei corsi è divisa tra due chunk. Nella griglia del docente, con K 4, erano 6° e 8° nella ricerca: la domanda è passata solo con K 8."
+    },
+    {
+      "n": 4,
+      "tipo": "dati",
+      "domanda": "Quanti giorni di ferie ha preso Sara Conti nel 2026?",
+      "risposta_vera": "Le Sara Conti sono due: 15 giorni quella di Brescia (Commerciale) e 21 quella di Padova (Logistica). Il totale 36 non riguarda nessuna delle due.",
+      "strada_attesa": "dati",
+      "fonti": [
+        {
+          "sql": "SELECT d.id, d.sede, d.reparto, SUM(a.quantita) AS giorni FROM dipendenti d JOIN assenze a ON a.dipendente_id = d.id WHERE d.nome = 'Sara' AND d.cognome = 'Conti' AND a.tipo = 'ferie' AND a.data_inizio BETWEEN '2026-01-01' AND '2026-12-31' GROUP BY d.id ORDER BY d.id",
+          "risultato": [[17, "Brescia", "Commerciale", 15], [88, "Padova", "Logistica", 21]]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "tipo": "dati",
+      "domanda": "Quante note spese sono ancora in attesa di approvazione, e per quale importo?",
+      "risposta_vera": "56 note spese, per 2.184,40 € in tutto.",
+      "strada_attesa": "dati",
+      "fonti": [
+        {
+          "sql": "SELECT COUNT(*) AS note, ROUND(SUM(importo), 2) AS importo FROM note_spese WHERE stato = 'in attesa'",
+          "risultato": [[56, 2184.4]]
+        }
+      ],
+      "nota": "Nella tabella lo stato è «in attesa»: una query con stato = 'in attesa di approvazione' trova 0 righe."
+    },
+    {
+      "n": 6,
+      "tipo": "dati",
+      "domanda": "Quante ore di permesso hanno preso i dipendenti del reparto IT nel 2026?",
+      "risposta_vera": "31 ore, in 10 permessi.",
+      "strada_attesa": "dati",
+      "fonti": [
+        {
+          "sql": "SELECT SUM(a.quantita) AS ore, COUNT(*) AS permessi FROM assenze a JOIN dipendenti d ON d.id = a.dipendente_id WHERE d.reparto = 'IT' AND a.tipo = 'permesso' AND a.data_inizio BETWEEN '2026-01-01' AND '2026-12-31'",
+          "risultato": [[31, 10]]
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "tipo": "documenti+dati",
+      "domanda": "La nota spese 1043 rispetta il massimale?",
+      "risposta_vera": "Sì: è una cena a Milano del 15 luglio 2026 da 38,50 €, e per le cene in fascia A dal 1° luglio 2026 il massimale è 40,00 € (Circolare n. 7/2026). Con il massimale precedente, 35,00 €, lo supererebbe.",
+      "strada_attesa": "documenti+dati",
+      "fonti": [
+        {
+          "sql": "SELECT id, data, citta, voce, importo, stato FROM note_spese WHERE id = 1043",
+          "risultato": [[1043, "2026-07-15", "Milano", "cena", 38.5, "in attesa"]]
+        },
+        {
+          "file": "circolari-personale-2026.html",
+          "chunk": "circolari-personale-2026-019",
+          "passaggio": "dal 1° luglio 2026 il massimale di rimborso della cena nelle città di fascia A (Milano e Roma) passa da 35,00 € a 40,00 € per persona."
+        },
+        {
+          "file": "policy-trasferte-note-spese.docx",
+          "chunk": "policy-trasferte-note-spese-014",
+          "passaggio": "Il massimale da applicare è quello in vigore alla data in cui la spesa è stata sostenuta"
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "tipo": "senza risposta",
+      "domanda": "Quando viene pagato il premio di produzione?",
+      "risposta_vera": "Non c'è: nessun documento e nessuna tabella parlano di un premio di produzione. La risposta giusta dice che non l'ha trovato e dove ha cercato.",
+      "strada_attesa": "documenti",
+      "fonti": [],
+      "assenti": ["premio"]
+    },
+    {
+      "n": 9,
+      "tipo": "follow-up",
+      "segue": 1,
+      "domanda": "E per il pranzo?",
+      "risposta_vera": "25,00 € in fascia A, invariato anche dal 1° luglio 2026.",
+      "strada_attesa": "documenti",
+      "fonti": [
+        {
+          "file": "circolari-personale-2026.html",
+          "chunk": "circolari-personale-2026-019",
+          "passaggio": "Il massimale del pranzo in fascia A resta di 25,00 €."
+        },
+        {
+          "file": "policy-trasferte-note-spese.docx",
+          "chunk": "policy-trasferte-note-spese-011",
+          "passaggio": "Voce: Pranzo; Fascia A (Milano, Roma): 25,00 €"
+        }
+      ]
+    }
+  ]
+}
