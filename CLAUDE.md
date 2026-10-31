@@ -27,8 +27,12 @@ Progetto finale del Master AI Engineering (Boolean), modulo 3 (RAG), e base per 
   (si cancella la collection). Con migliaia di agenti si potrà rivalutare.
 - Tabelle: un SQLite per agente; sessioni di chat in un SQLite con chiave `<agent_id>:<session_id>`.
 - Formati: documenti .txt .md .pdf .docx .html (max ~20 per agente); tabelle .csv .xlsx (una per file).
-- Utente demo da seeder con agenti `demo-valtesa` e `demo-valdoria` (dati finti in `backend/seed/`);
-  gli altri utenti caricano i propri file.
+- Utente demo da seeder con agenti `demo-valtesa` e `demo-valdoria` (dati finti in `backend/seed/`):
+  è solo un template. Ogni accesso con le sue credenziali crea una **sandbox**, cioè un utente
+  temporaneo con la propria copia degli agenti demo (`POST /agents/{id}/clone`, senza nuovi
+  embedding). Il visitatore può cambiare tutto; al prossimo accesso riparte dai valori iniziali, e
+  le sandbox scadute si cancellano. Le istruzioni ufficiali degli agenti demo stanno in
+  `DemoSeeder`: le correzioni della griglia si fanno lì. Gli altri utenti caricano i propri file.
 - Sicurezza minima: limite dimensione/numero file, controllo firma file oltre all'estensione,
   `query_db` solo SELECT su connessione `mode=ro`, documenti caricati trattati come dati (prompt injection).
 - Regole fisse dell'agente: rispondere solo da quanto restituiscono i tool, citare l'id del chunk

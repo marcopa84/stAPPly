@@ -47,21 +47,22 @@ Aggiornato il 1-11-2026.
 
   Lo script è in `scratchpad/e2e_sandbox.sh` della sessione, non nel repo.
 
+- **Seed demo rifatto** con la nuova pulizia dei PDF (1-11-2026).
+- **Griglia vera, criterio 5:**
+  - Valtesa 18/18 e Valdoria 17/18 al primo giro, due lanci per domanda;
+  - una cura (le risposte sì/no di Valdoria) e Valdoria rilanciata con tre lanci: 27/27;
+  - risultati e cura in `docs/griglia/` e nel README; template di Laravel riallineato con
+    `db:seed --class=DemoSeeder`.
+- **CLAUDE.md** aggiornato con la sandbox demo.
+- **CI su GitHub** verde, backend e frontend, sugli ultimi push.
+
 ## Da fare
 
-1. **Rilanciare `seed_demo`** (`cd backend && uv run python -m scripts.seed_demo`): la pulizia dei PDF
-   è cambiata, e i chunk in `backend/data` sono indicizzati con quella vecchia.
-2. **Prova della sandbox nel browser**, quando Chrome è collegato, facendo prima logout dal
+1. **Prova della sandbox nel browser**, quando Chrome è collegato, facendo prima logout dal
    template (la prova con curl è già passata).
-3. **Griglia vera, criterio 5** (serve la chiave):
-   - `cd backend && uv run python -m scripts.griglia valtesa`, poi lo stesso con `valdoria`;
-   - compilare l'esito nei file `docs/griglia/risultati-*.md`;
-   - una cura alla volta in `DemoSeeder.php` (per esempio la riga sugli omonimi, come la cura 1
-     del docente); rilanciare tutte e due le griglie, poi `php artisan db:seed --class=DemoSeeder`;
-   - committare i risultati prima e dopo la cura e scrivere il punteggio nella tabella dei
-     criteri del README.
-4. **CLAUDE.md:** aggiornare la riga «Utente demo da seeder…» con la sandbox (una copia degli
-   agenti demo per ogni accesso, reset al prossimo login, istruzioni ufficiali in `DemoSeeder`).
+2. **Idea, da decidere:** dare all'agente la data di oggi nelle regole fisse del backend. Oggi
+   non sa che un prestito scaduto il 18 ottobre è scaduto (domanda 7 di Valdoria). È una modifica
+   al comportamento: dopo, vanno rilanciate tutte e due le griglie.
 
 ## Decisioni aperte (di Marco)
 
