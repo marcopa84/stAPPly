@@ -1,6 +1,7 @@
 """L'agente: tool costruiti a runtime, istruzioni, modello e traccia (tool_chiamati, strada)."""
 
 import logging
+from datetime import UTC, date, datetime
 
 import pytest
 from agents import Agent, OpenAIResponsesModel, ToolCallItem
@@ -80,6 +81,34 @@ def test_istruzioni_di_laravel_poi_le_regole_fisse():
     assert "usa cerca_documenti" in testo
     assert "usa query_db" in testo
     assert "usa tutti e due i tool" in testo
+
+
+def test_le_istruzioni_dicono_la_data_di_oggi():
+    testo = agent.istruzioni_complete("", {"query_db"}, oggi=date(2026, 11, 5))
+    assert "- Oggi è giovedì 5 novembre 2026: tienine conto per scadenze" in testo
+
+
+@pytest.mark.parametrize(
+    ("giorno", "scritto"),
+    [
+        (date(2026, 8, 1), "sabato 1° agosto 2026"),
+        (date(2026, 10, 18), "domenica 18 ottobre 2026"),
+        (date(2027, 1, 31), "domenica 31 gennaio 2027"),
+    ],
+)
+def test_data_in_italiano(giorno, scritto):
+    assert agent.data_in_italiano(giorno) == scritto
+
+
+def test_la_data_di_oggi_e_quella_italiana(monkeypatch):
+    # Alle 23:30 UTC del 31 dicembre in Italia è già il 1° gennaio.
+    class Orologio(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 12, 31, 23, 30, tzinfo=UTC).astimezone(tz)
+
+    monkeypatch.setattr(agent, "datetime", Orologio)
+    assert agent.date_di_oggi() == date(2027, 1, 1)
 
 
 def test_istruzioni_vuote_lasciano_le_regole_fisse():

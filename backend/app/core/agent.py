@@ -17,8 +17,10 @@ import json
 import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from functools import lru_cache
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from agents import (
     Agent,
@@ -48,6 +50,25 @@ RIPROVE_MODELLO = 1
 # L'output di query_db finisce nel contesto del modello e resta nella memoria della sessione:
 # oltre questi caratteri (circa 5000 token) la query torna al modello come errore da correggere.
 MAX_CARATTERI_QUERY_DB = 20_000
+
+# La data di oggi va nelle istruzioni: senza, l'agente non sa se una scadenza è passata o se
+# una regola nuova è già in vigore (il prestito 620 di Valdoria, scaduto il 18 ottobre 2026).
+FUSO_ORARIO = ZoneInfo("Europe/Rome")
+GIORNI = ("lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica")
+MESI = (
+    "gennaio",
+    "febbraio",
+    "marzo",
+    "aprile",
+    "maggio",
+    "giugno",
+    "luglio",
+    "agosto",
+    "settembre",
+    "ottobre",
+    "novembre",
+    "dicembre",
+)
 
 REGOLE_FISSE = """\
 ## Regole di stAPPly
@@ -105,9 +126,13 @@ def costruisci_agente(
     )
 
 
-def istruzioni_complete(istruzioni: str, nomi_tool: set[str]) -> str:
-    """Le istruzioni scritte in Laravel, poi le regole fisse e come usare i tool presenti."""
-    guida = []
+def istruzioni_complete(istruzioni: str, nomi_tool: set[str], oggi: date | None = None) -> str:
+    """Le istruzioni scritte in Laravel, poi le regole fisse, la data di oggi e come usare i
+    tool presenti. `oggi` serve ai test; senza, è la data di oggi in Italia."""
+    guida = [
+        f"- Oggi è {data_in_italiano(oggi or date_di_oggi())}: tienine conto per scadenze, "
+        "periodi in vigore e domande come «quest'anno»."
+    ]
     if "cerca_documenti" in nomi_tool:
         guida.append("- Per le domande sui documenti usa cerca_documenti.")
     if "query_db" in nomi_tool:
@@ -121,6 +146,19 @@ def istruzioni_complete(istruzioni: str, nomi_tool: set[str]) -> str:
         )
     parti = [istruzioni.strip(), REGOLE_FISSE + "\n" + "\n".join(guida)]
     return "\n\n".join(parte for parte in parti if parte)
+
+
+def date_di_oggi() -> date:
+    """La data in Italia, non quella del server: un container gira in UTC, e a mezzanotte
+    italiana l'agente penserebbe di essere ancora a ieri."""
+    return datetime.now(FUSO_ORARIO).date()
+
+
+def data_in_italiano(giorno: date) -> str:
+    """«giovedì 5 novembre 2026», «sabato 1° agosto 2026». Scritta a mano e non con la locale
+    del sistema, che in un container di solito non c'è."""
+    numero = "1°" if giorno.day == 1 else str(giorno.day)
+    return f"{GIORNI[giorno.weekday()]} {numero} {MESI[giorno.month - 1]} {giorno.year}"
 
 
 def crea_tool(agent_id: str) -> list[Tool]:

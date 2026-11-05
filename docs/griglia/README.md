@@ -92,6 +92,9 @@ funziona e non rompe le altre domande, si riallinea Laravel con
 | [`risultati-valdoria-20261031-150153.md`](risultati-valdoria-20261031-150153.md) | Valdoria dopo la cura 1, 3 lanci | 27/27 |
 | [`risultati-valtesa-20261105-195716.md`](risultati-valtesa-20261105-195716.md) | Valtesa dopo la cura 2, 3 lanci | 27/27 |
 | [`risultati-valdoria-20261105-195929.md`](risultati-valdoria-20261105-195929.md) | Valdoria dopo la cura 2, 3 lanci | 27/27 |
+| [`risultati-valtesa-20261105-204302.md`](risultati-valtesa-20261105-204302.md) | Valtesa dopo la cura 3, 3 lanci | 25/27 |
+| [`risultati-valtesa-20261105-204813.md`](risultati-valtesa-20261105-204813.md) | Valtesa dopo la cura 3, di nuovo, 3 lanci | 25/27 |
+| [`risultati-valdoria-20261105-204539.md`](risultati-valdoria-20261105-204539.md) | Valdoria dopo la cura 3, 3 lanci | 27/27 |
 
 ### Cura 1: le risposte sì/no di Valdoria
 
@@ -126,6 +129,39 @@ anche per quelli degli utenti.
 **Le altre dopo la modifica.** Cambia il comportamento di tutti e due gli agenti, quindi rilanciate
 tutte e due le griglie con tre lanci: 27/27 e 27/27. La domanda 5 ora filtra `'in attesa'` al primo
 colpo, la 6 di Valdoria `tessera = 'studenti'`.
+
+### Cura 3: la data di oggi nelle regole fisse
+
+**Cosa succedeva.** L'agente non sapeva che giorno fosse. Alla domanda 7 di Valdoria («Il
+prestito 620 si può rinnovare ancora?») nessuna risposta diceva che il prestito era anche
+scaduto, il 18 ottobre 2026, e una diceva «ancora attivo».
+
+**Cosa ho cambiato.** Una cosa sola, nel backend (`agent.istruzioni_complete`): tra le regole fisse
+c'è la data di oggi in Italia («Oggi è giovedì 5 novembre 2026: tienine conto per scadenze,
+periodi in vigore e domande come «quest'anno»»). Vale per tutti gli agenti.
+
+**Come si valutano le domande che dipendono dalla data** (scritto prima di rilanciare). Con la
+data, la domanda 1 di Valtesa può avere come risposta solo il massimale in vigore oggi. È
+giusta se dà 40,00 € e dice che vale dal 1° luglio 2026, anche senza i 35,00 € di prima; è
+sbagliata se dà 35,00 € come massimale di oggi. Per la domanda 7 di Valdoria resta giusta la
+risposta «No» con i due rinnovi già fatti, e anche quella che aggiunge la scadenza passata.
+
+**Le altre dopo la modifica.** Valdoria 27/27, e ora alla domanda 7 tutti e tre i lanci dicono che
+il prestito è scaduto il 18 ottobre 2026. La domanda 1 di Valtesa dà il massimale di oggi (40 €,
+dal 1° luglio), a volte anche quello di prima. Valtesa però scende a 25/27, e un secondo giro
+senza cambiare niente dà di nuovo 25/27 con errori su un'altra domanda:
+
+| Giro | Domanda 3 (corsi sicurezza) | Domanda 4 (Sara Conti) | Domanda 7 (nota 1043) |
+|---|---|---|---|
+| primo | 2/3: una volta solo la formazione generale | 3/3 | 2/3: una volta la policy da 35 € senza la circolare |
+| secondo | 3/3 | 1/3: due volte la somma «36» | 3/3 |
+
+Sono le tre domande che erano instabili anche nella griglia del docente: gli errori sono gli
+stessi (la tabella dei corsi divisa tra due chunk, le omonime sommate, la circolare non trovata) e
+cambiano da un giro all'altro, mentre la data non entra in nessuna di queste risposte. La cura 3
+resta: sistema quello che doveva e non rompe niente in modo ripetibile. Le cure per queste tre
+sono quelle del docente: la riga sulle omonime nelle istruzioni di Valtesa (sua cura 1) e K 8
+invece di 4 (sua cura 2), una alla volta.
 
 **Rimaste, senza errori ma da sapere.**
 - A volte una risposta scrive tra `[ ]` qualcosa che non è un chunk: il nome di un file

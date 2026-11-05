@@ -270,11 +270,15 @@ I test usano un modello finto. La griglia del criterio 5 invece gira con il mode
 | Primo, due lanci per domanda | 18/18 | 17/18: la domanda 7 una volta comincia con «Sì» e poi dice che il prestito non si rinnova |
 | Dopo la cura 1, tre lanci per domanda | — (istruzioni invariate) | 27/27 |
 | Dopo la cura 2, tre lanci per domanda | 27/27 | 27/27 |
+| Dopo la cura 3, tre lanci per domanda | 25/27 e 25/27, in due giri | 27/27 |
 
 La cura 1 è una riga nelle istruzioni di Valdoria (a una domanda sì/no si risponde prima «Sì» o
 «No», coerente con il resto). La cura 2 è nel backend: lo schema di `query_db` elenca i valori
 delle colonne di testo con pochi valori (`stato: 'approvata', 'in attesa', 'respinta'`), perché il
-modello li indovinava e in chat ha risposto «0 note spese in attesa». Risultati lancio per
+modello li indovinava e in chat ha risposto «0 note spese in attesa». La cura 3 dà all'agente
+la data di oggi: ora sa che il prestito 620 di Valdoria è scaduto. I due errori di Valtesa dopo
+la cura 3 sono sulle domande instabili anche nella griglia del docente (omonime, circolare non
+trovata) e cambiano da un giro all'altro. Risultati lancio per
 lancio, come si lancia la griglia e come si prova una cura:
 [`docs/griglia/README.md`](docs/griglia/README.md).
 
