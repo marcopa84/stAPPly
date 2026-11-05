@@ -56,6 +56,9 @@ Aggiornato il 1-11-2026.
 - **CLAUDE.md** aggiornato con la sandbox demo.
 - **CI su GitHub** verde, backend e frontend, sugli ultimi push.
 
+- **Cura 2 della griglia (5-11-2026):** lo schema di `query_db` elenca i valori delle colonne di
+  testo con pochi valori; il modello indovinava `'in attesa di approvazione'` e in Docker aveva
+  risposto «0». Rilanciate le due griglie con tre lanci: Valtesa 27/27, Valdoria 27/27.
 - **Docker (5-11-2026):** `compose.yaml` con backend (uv), frontend (FrankenPHP) e scheduler,
   con gli stessi `.env` dello sviluppo. Provato dal vivo su http://localhost:8080: seed demo al primo
   avvio, login demo con sandbox, chat con traccia, tutto nel browser. CI `docker.yml` che
@@ -63,12 +66,7 @@ Aggiornato il 1-11-2026.
 
 ## Da fare
 
-1. **`query_db` indovina i valori delle colonne di testo.** In Docker, «Quante note spese sono in
-   attesa?» ha risposto «0»: il modello ha filtrato `stato = 'in attesa di approvazione'`, mentre il
-   valore vero è `'in attesa'`, e non si è corretto (nella griglia, invece, sì). Proposta: nella
-   descrizione di `query_db` mettere, per le colonne di testo con pochi valori distinti, l'elenco
-   dei valori. Cambia il comportamento: dopo, vanno rilanciate le due griglie.
-2. **Idea, da decidere:** dare all'agente la data di oggi nelle regole fisse del backend. Oggi
+1. **Idea, da decidere:** dare all'agente la data di oggi nelle regole fisse del backend. Oggi
    non sa che un prestito scaduto il 18 ottobre è scaduto (domanda 7 di Valdoria). È una modifica
    al comportamento: dopo, vanno rilanciate tutte e due le griglie.
 
