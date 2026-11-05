@@ -1,0 +1,50 @@
+name: docker
+
+# Controlla che le immagini di compose.yaml si costruiscano. Gira solo quando cambia quello che
+# entra nella build in modo diverso dal codice: Dockerfile, entrypoint, lockfile, compose.yaml.
+# Il codice lo provano già i workflow backend e frontend.
+on:
+  push:
+    branches:
+      - main
+    paths: &paths
+      - 'compose.yaml'
+      - 'backend/Dockerfile'
+      - 'backend/.dockerignore'
+      - 'backend/docker-entrypoint.sh'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
+      - 'frontend/Dockerfile'
+      - 'frontend/.dockerignore'
+      - 'frontend/docker/**'
+      - 'frontend/composer.json'
+      - 'frontend/composer.lock'
+      - 'frontend/package.json'
+      - 'frontend/package-lock.json'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    paths: *paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Senza i file .env (che non sono nel repo) compose.yaml deve restare valido.
+      - name: Validate compose.yaml
+        run: docker compose config --quiet
+
+      - name: Build images
+        run: docker compose build --progress=plain

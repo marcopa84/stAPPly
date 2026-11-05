@@ -1,0 +1,10 @@
+# Nell'immagine entrano solo pyproject, uv.lock, app/, scripts/ e seed/ (vedi Dockerfile):
+# qui si tiene fuori dal contesto di build quello che è grande o segreto.
+.env
+.venv/
+data/
+tests/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/

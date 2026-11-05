@@ -15,7 +15,9 @@ Progetto finale del Master AI Engineering (Boolean), modulo 3 (RAG), e base per 
   pose, espressioni o animazioni. Il riferimento resta nel racconto, a parole, non nel disegno.
 
 ## Decisioni
-- Monorepo: `frontend/` Laravel + Livewire (Herd, niente Docker), `backend/` Python FastAPI.
+- Monorepo: `frontend/` Laravel + Livewire, `backend/` Python FastAPI. Si sviluppa in locale con
+  Herd e uv; `compose.yaml` fa girare tutto in Docker (backend, frontend con FrankenPHP,
+  scheduler) con gli stessi `.env`.
 - Laravel è la fonte di verità per utenti, agenti, permessi e **istruzioni degli agenti**: le salva e le
   passa al backend a ogni chat (`instructions`, `agent_name`). Il backend non conserva profili:
   aggiunge solo le regole fisse (sotto) e lavora per `agent_id`.

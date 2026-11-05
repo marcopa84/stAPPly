@@ -62,18 +62,42 @@ Un turno di chat:
 
 ## Requisiti
 
+Le strade per avviarlo sono due: **Docker**, per far girare tutto con un comando, e **in
+locale** con Herd e uv, per lavorarci.
+
 | Strumento | A cosa serve |
 |---|---|
-| [Laravel Herd](https://herd.laravel.com) | PHP 8.4, Composer e Node 22 per il frontend, e il sito `http://stapply.test` |
-| [uv](https://docs.astral.sh/uv/) | ambiente e dipendenze del backend; installa da sé Python 3.12 (`backend/.python-version`) |
+| [Docker](https://docs.docker.com/get-started/get-docker/) con Compose | backend, frontend e scheduler in container, senza installare altro |
+| [Laravel Herd](https://herd.laravel.com) | in locale: PHP 8.4, Composer e Node 22 per il frontend, e il sito `http://stapply.test` |
+| [uv](https://docs.astral.sh/uv/) | in locale: ambiente e dipendenze del backend; installa da sé Python 3.12 (`backend/.python-version`) |
 | Una chiave OpenAI | embedding dei documenti e chat. Non serve per i test |
 
-**Perché niente Docker.** I servizi sono due e in due linguaggi, ma in sviluppo girano bene
-nativi: Herd serve Laravel, uv ricrea l'ambiente Python da `uv.lock`. La riproducibilità sta nei
-lockfile (`uv.lock`, `composer.lock`, `package-lock.json`) e nella CI, che a ogni push reinstalla
-tutto da zero su Linux. `uv.lock` è risolto per tutte le piattaforme: per esempio usa
-`onnxruntime` 1.23 sui Mac Intel, per cui le versioni nuove non hanno wheel, e 1.31 su Linux.
-Docker servirà per il deploy del backend, non per lavorarci.
+La riproducibilità sta nei lockfile (`uv.lock`, `composer.lock`, `package-lock.json`): li usano
+le immagini Docker, l'avvio in locale e la CI, che a ogni push reinstalla tutto da zero su Linux.
+`uv.lock` è risolto per tutte le piattaforme: per esempio usa `onnxruntime` 1.23 sui Mac Intel,
+per cui le versioni nuove non hanno wheel, e 1.31 su Linux, quindi nei container.
+
+## Avvio con Docker
+
+```bash
+cp backend/.env.example backend/.env       # scrivi OPENAI_API_KEY e cambia INTERNAL_API_KEY
+cp frontend/.env.example frontend/.env     # STAPPLY_BACKEND_KEY = INTERNAL_API_KEY del backend
+docker compose up --build                  # poi http://localhost:8080
+```
+
+- I servizi sono tre: `backend` (FastAPI, raggiungibile solo dagli altri container),
+  `frontend` (Laravel servito da [FrankenPHP](https://frankenphp.dev) sulla porta 8080) e
+  `scheduler`, che ogni ora cancella le sandbox demo scadute.
+- I `.env` sono gli stessi dell'avvio in locale: [`compose.yaml`](compose.yaml) cambia solo
+  indirizzi, percorsi dei dati e ambiente di produzione.
+- Al primo avvio il backend indicizza gli agenti demo, se c'è `OPENAI_API_KEY`: costa una
+  frazione di centesimo, e il volume li conserva per gli avvii dopo. Il frontend crea il database,
+  esegue le migration e il seeder della demo; se `APP_KEY` è vuota la genera e la tiene nel suo
+  volume.
+- I dati stanno nei volumi `backend-data` e `frontend-data`. `docker compose down -v` li cancella
+  e riparte da zero.
+- Comandi nei container: `docker compose exec backend python -m scripts.griglia valtesa`,
+  `docker compose exec frontend php artisan stapply:prune-demo`.
 
 ## Avvio in locale
 
@@ -158,9 +182,11 @@ percorso:
 
 - `backend.yml`: `uv sync --locked`, Ruff e pytest. Installa anche PHP, perché un test
   confronta le istruzioni lette da `scripts/griglia.py` con quelle che vede PHP;
-- `frontend.yml`: Composer, `npm ci`, build, Pint, PHPStan (livello 7) e Pest.
+- `frontend.yml`: Composer, `npm ci`, build, Pint, PHPStan (livello 7) e Pest;
+- `docker.yml`: valida `compose.yaml` e costruisce le immagini, quando cambiano Dockerfile,
+  entrypoint, lockfile o `compose.yaml`.
 
-Tutti e due girano anche quando cambia il contratto. Il backend gira anche quando cambiano
+I primi due girano anche quando cambia il contratto. Il backend gira anche quando cambiano
 `docs/griglia/` o `DemoSeeder.php`, che i suoi test leggono. Dependabot propone ogni settimana gli
 aggiornamenti di Composer, npm, uv e delle action.
 
@@ -251,7 +277,8 @@ prova una cura: [`docs/griglia/README.md`](docs/griglia/README.md).
 
 ```
 .
-├── .github/              CI (un workflow per servizio) e Dependabot
+├── .github/              CI (un workflow per servizio, più le immagini Docker) e Dependabot
+├── compose.yaml          backend, frontend e scheduler in Docker
 ├── docs/
 │   ├── api.md            il contratto tra frontend e backend
 │   ├── contract/         esempi JSON usati dai test dei due lati
@@ -261,8 +288,10 @@ prova una cura: [`docs/griglia/README.md`](docs/griglia/README.md).
 │   ├── app/core/         ingestione, Chroma, tabelle, agente, chat; senza FastAPI
 │   ├── scripts/          seed_demo.py (dati degli agenti demo) e griglia.py (griglia di prova)
 │   ├── seed/             documenti e tabelle finti di Valtesa e Valdoria
-│   └── tests/
+│   ├── tests/
+│   └── Dockerfile        immagine con uv; docker-entrypoint.sh indicizza la demo al primo avvio
 └── frontend/             Laravel + Livewire + Flux, vedi frontend/README.md
+    ├── Dockerfile              immagine con FrankenPHP; docker/entrypoint.sh prepara Laravel
     ├── app/Services/Backend/   il client HTTP del contratto
     ├── app/Livewire/           dashboard, agenti, documenti, tabelle, chat, console SQL
     ├── app/Markdown/           le citazioni [id] diventano chip con il passaggio

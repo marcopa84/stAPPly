@@ -1,0 +1,66 @@
+# stAPPly con Docker: backend, frontend e scheduler con un comando solo.
+#
+#   cp backend/.env.example backend/.env      # OPENAI_API_KEY e INTERNAL_API_KEY
+#   cp frontend/.env.example frontend/.env    # STAPPLY_BACKEND_KEY uguale a INTERNAL_API_KEY
+#   docker compose up --build                 # poi http://localhost:8080
+#
+# I file .env sono gli stessi dello sviluppo con Herd e uv: qui si cambia solo quello che nel
+# container è diverso (indirizzi, percorsi dei dati, ambiente di produzione).
+name: stapply
+
+x-frontend: &frontend
+  build: ./frontend
+  image: stapply-frontend:local
+  env_file:
+    - path: frontend/.env
+      required: false
+  environment: &frontend-env
+    APP_ENV: production
+    APP_DEBUG: "false"
+    APP_URL: http://localhost:8080
+    DB_CONNECTION: sqlite
+    DB_DATABASE: /var/lib/stapply/database.sqlite
+    LOG_CHANNEL: stderr
+    STAPPLY_BACKEND_URL: http://backend:8001
+  volumes:
+    - frontend-data:/var/lib/stapply
+  restart: unless-stopped
+
+services:
+  # Raggiungibile solo dagli altri container: Laravel è l'unico client del backend.
+  backend:
+    build: ./backend
+    image: stapply-backend:local
+    env_file:
+      - path: backend/.env
+        required: false
+    environment:
+      DATA_DIR: /var/lib/stapply
+    volumes:
+      - backend-data:/var/lib/stapply
+    restart: unless-stopped
+
+  frontend:
+    <<: *frontend
+    environment:
+      <<: *frontend-env
+      STAPPLY_SETUP: "1"
+    ports:
+      - "8080:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # stapply:prune-demo ogni ora, il cron che con Herd manca.
+  scheduler:
+    <<: *frontend
+    command: ["php", "artisan", "schedule:work"]
+    healthcheck:
+      disable: true
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+volumes:
+  backend-data:
+  frontend-data:
