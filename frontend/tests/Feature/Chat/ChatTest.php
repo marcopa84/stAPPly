@@ -42,16 +42,22 @@ test('la pagina elenca le chat con l\'agente e apre quella nell\'URL', function 
         ->assertSee('Chat con Assistente Valtesa')
         ->assertSee('Ferie 2026')
         ->assertSee('Trasferte')
-        ->assertSee('Fai la prima domanda a Assistente Valtesa.');
+        ->assertSee('Di cosa vuoi parlare con Assistente Valtesa?');
 
     Http::assertNothingSent();
 });
 
-test('senza conversazione nell\'URL la pagina invita a sceglierne una', function () {
+test("senza conversazione nell'URL si apre una chat nuova, pronta per scrivere", function () {
     $this->get(route('agents.chat', $this->agent))
         ->assertOk()
-        ->assertSee('Scegli una chat o iniziane una nuova')
-        ->assertDontSee('Invia');
+        ->assertSee('Nuova chat')
+        ->assertSee('Di cosa vuoi parlare con Assistente Valtesa?')
+        ->assertSee('Invia')
+        ->assertSee('Trasferte');
+
+    // Aprire la pagina non crea niente: la chat nasce con la prima domanda.
+    expect(Conversation::count())->toBe(1);
+    Http::assertNothingSent();
 });
 
 test("la pagina dell'agente porta alla chat", function () {
@@ -148,83 +154,64 @@ test('una domanda fuori tema mostra la strada nessuna senza tool', function () {
         ->assertSee('Nessun tool chiamato.');
 });
 
-test('lo stesso nome riapre la stessa chat, e il backend riceve la stessa sessione', function () {
+test('la prima domanda apre una chat nuova con un titolo provvisorio, e la risposta parte da sola', function () {
     fakeBackend(['POST agents/agente-di-prova/chat' => Http::response(contract('chat.200'))]);
+    $question = "Qual è il massimale per una cena in trasferta a Milano, e vale anche per Roma?\nGrazie";
 
-    Livewire::test(Chat::class, ['agent' => $this->agent])
-        ->set('title', 'Ferie 2026')
-        ->call('open')
+    $newChat = Livewire::test(Chat::class, ['agent' => $this->agent])
+        ->set('message', $question)
+        ->call('send')
         ->assertHasNoErrors();
 
-    $conversation = Conversation::where('title', 'Ferie 2026')->sole();
+    $conversation = Conversation::where('id', '!=', $this->conversation->id)->sole();
+    $newChat->assertRedirect(route('agents.chat', ['agent' => $this->agent, 'conversation' => $conversation]));
 
     expect($conversation->user_id)->toBe($this->user->id)
+        ->and($conversation->title)->toBe('Qual è il massimale per una cena in trasferta a…')
+        ->and($conversation->titled_at)->toBeNull()
         ->and($conversation->session_id)->toHaveLength(26)->toMatch(SESSION_ID_PATTERN)
-        ->and($conversation->session_id)->toBe(strtolower($conversation->session_id));
+        ->and($conversation->session_id)->toBe(strtolower($conversation->session_id))
+        ->and($conversation->messages()->sole()->content)->toBe($question);
+    Http::assertNothingSent();
 
+    // All'indirizzo della chat la domanda aspetta la risposta, che parte con reply().
     Livewire::test(Chat::class, ['agent' => $this->agent, 'conversation' => $conversation])
-        ->set('message', 'Quanti giorni di ferie ho?')
-        ->call('send')
-        ->call('reply');
+        ->assertSet('awaitingReply', true)
+        ->assertSeeHtml('x-init="$wire.reply().catch(() => $wire.replyFailed())"')
+        ->call('reply')
+        ->assertSet('awaitingReply', false);
 
-    // Chiusa e riaperta con lo stesso nome (anche con spazi in più): niente chat nuova.
-    Livewire::test(Chat::class, ['agent' => $this->agent])
-        ->set('title', '  Ferie 2026 ')
-        ->call('open')
-        ->assertRedirect(route('agents.chat', ['agent' => $this->agent, 'conversation' => $conversation]));
+    Http::assertSent(fn (Request $request) => $request['session_id'] === $conversation->session_id
+        && $request['message'] === $question);
+    expect($conversation->messages()->count())->toBe(2);
+});
 
-    Livewire::test(Chat::class, ['agent' => $this->agent, 'conversation' => $conversation])
+test('riaprendo una chat dallo storico il backend riceve la stessa sessione (criterio 1)', function () {
+    fakeBackend(['POST agents/agente-di-prova/chat' => Http::response(contract('chat.200'))]);
+
+    openChat()->set('message', 'Quanti giorni di ferie ho?')->call('send')->call('reply');
+
+    // Chiusa e riaperta dallo storico: stessa conversazione, la domanda di prima è lì.
+    $this->get(route('agents.chat', $this->agent))
+        ->assertSee(route('agents.chat', ['agent' => $this->agent, 'conversation' => $this->conversation]));
+
+    openChat()
         ->assertSee('Quanti giorni di ferie ho?')
         ->set('message', 'E quanti me ne restano?')
         ->call('send')
         ->call('reply');
 
-    expect(Conversation::where('title', 'Ferie 2026')->count())->toBe(1);
-
     $sessions = Http::recorded()->map(fn (array $pair) => $pair[0]->data()['session_id'])->unique();
 
-    expect($sessions->all())->toBe([$conversation->session_id]);
+    expect($sessions->all())->toBe([$this->conversation->session_id])
+        ->and(Conversation::count())->toBe(1);
 });
 
-test('il nome riapre la chat senza badare alle maiuscole, anche accentate, e resta scritto com\'era', function () {
-    $conversation = Conversation::factory()->for($this->agent)->create(['title' => 'Perché le Ferie']);
-
+test('un messaggio vuoto non parte e non apre chat', function () {
     Livewire::test(Chat::class, ['agent' => $this->agent])
-        ->set('title', 'PERCHÉ LE FERIE')
-        ->call('open')
-        ->assertRedirect(route('agents.chat', ['agent' => $this->agent, 'conversation' => $conversation]));
-
-    expect(Conversation::where('agent_id', $this->agent->id)->count())->toBe(2)
-        ->and($conversation->fresh()->title)->toBe('Perché le Ferie');
-});
-
-test('una chat con lo stesso nome di un altro utente non si riapre', function () {
-    $foreign = Conversation::factory()->for($this->agent)->create(['title' => 'Ferie 2026', 'user_id' => User::factory()]);
-
-    Livewire::test(Chat::class, ['agent' => $this->agent])
-        ->set('title', 'ferie 2026')
-        ->call('open');
-
-    $mine = Conversation::whereBelongsTo($this->user)->where('title', 'ferie 2026')->sole();
-
-    expect($mine->id)->not->toBe($foreign->id);
-});
-
-test('un nome nuovo crea una chat nuova, con una sessione diversa', function () {
-    Livewire::test(Chat::class, ['agent' => $this->agent])
-        ->set('title', 'Note spese')
-        ->call('open');
-
-    $conversation = Conversation::where('title', 'Note spese')->sole();
-
-    expect($conversation->session_id)->not->toBe($this->conversation->session_id);
-});
-
-test('nome della chat e messaggio vuoti non partono', function () {
-    Livewire::test(Chat::class, ['agent' => $this->agent])
-        ->set('title', '   ')
-        ->call('open')
-        ->assertHasErrors(['title' => 'required']);
+        ->set('message', '   ')
+        ->call('send')
+        ->assertHasErrors(['message' => 'required']);
 
     openChat()
         ->set('message', '   ')
@@ -235,6 +222,145 @@ test('nome della chat e messaggio vuoti non partono', function () {
     expect(Conversation::count())->toBe(1)
         ->and(Message::count())->toBe(0);
     Http::assertNothingSent();
+});
+
+test('oltre il limite di messaggi la chat nuova non nasce', function () {
+    Config::set('stapply.chat_messages_per_minute', 1);
+    fakeBackend(['POST agents/agente-di-prova/chat' => Http::response(contract('chat.200'))]);
+
+    openChat()->set('message', 'Prima domanda')->call('send')->call('reply');
+
+    Livewire::test(Chat::class, ['agent' => $this->agent])
+        ->set('message', 'Seconda domanda, in una chat nuova')
+        ->call('send')
+        ->assertHasErrors('message')
+        ->assertNoRedirect();
+
+    expect(Conversation::count())->toBe(1);
+});
+
+/**
+ * Una chat con il titolo provvisorio, una domanda e la sua risposta.
+ */
+function provisionalChat(): Conversation
+{
+    $conversation = Conversation::factory()->for(test()->agent)->create([
+        'title' => 'Quante note spese sono in attesa…',
+        'titled_at' => null,
+    ]);
+    Message::factory()->for($conversation)->create(['content' => 'Quante note spese sono in attesa?', 'reply_started_at' => now()]);
+    Message::factory()->for($conversation)->create(['role' => MessageRole::Assistant, 'content' => 'Sono 56.']);
+
+    return $conversation;
+}
+
+test('dopo la prima risposta il modello scrive il titolo, una volta sola', function () {
+    fakeBackend(['POST titles' => Http::response(contract('titles.200'))]);
+    $conversation = provisionalChat();
+
+    Livewire::test(Chat::class, ['agent' => $this->agent, 'conversation' => $conversation])
+        ->call('nameConversation')
+        ->call('nameConversation')
+        ->assertSee('Note spese in attesa di approvazione');
+
+    expect($conversation->fresh())
+        ->title->toBe('Note spese in attesa di approvazione')
+        ->titled_at->not->toBeNull();
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => $request->url() === 'http://backend.test/titles'
+        && $request['message'] === 'Quante note spese sono in attesa?'
+        && $request['answer'] === 'Sono 56.');
+});
+
+test('la risposta alla prima domanda chiede il titolo, quella di una chat già intitolata no', function () {
+    fakeBackend(['POST agents/agente-di-prova/chat' => Http::response(contract('chat.200'))]);
+    $conversation = Conversation::factory()->for($this->agent)->create(['titled_at' => null]);
+
+    Livewire::test(Chat::class, ['agent' => $this->agent, 'conversation' => $conversation])
+        ->set('message', 'Prima domanda')
+        ->call('send')
+        ->call('reply')
+        ->assertJs('$wire.nameConversation()');
+
+    openChat()
+        ->set('message', 'Altra domanda')
+        ->call('send')
+        ->call('reply')
+        ->assertNoJs();
+});
+
+test("se l'utente rinomina la chat mentre arriva il titolo, vince il suo nome", function () {
+    $conversation = provisionalChat();
+    fakeBackend(['POST titles' => function () use ($conversation) {
+        $conversation->fresh()->rename('Note spese di luglio');
+
+        return Http::response(contract('titles.200'));
+    }]);
+
+    Livewire::test(Chat::class, ['agent' => $this->agent, 'conversation' => $conversation])
+        ->call('nameConversation');
+
+    expect($conversation->fresh()->title)->toBe('Note spese di luglio');
+});
+
+test('se il backend non scrive il titolo resta quello provvisorio', function () {
+    fakeBackend(['POST titles' => Http::response(['detail' => 'Il modello non risponde.'], 502)]);
+    $conversation = provisionalChat();
+
+    Livewire::test(Chat::class, ['agent' => $this->agent, 'conversation' => $conversation])
+        ->call('nameConversation')
+        ->assertHasNoErrors();
+
+    expect($conversation->fresh()->title)->toBe('Quante note spese sono in attesa…');
+});
+
+test('una chat già intitolata, o senza risposta, non chiede il titolo', function () {
+    $conversation = provisionalChat();
+    $conversation->rename('Note spese');
+
+    Livewire::test(Chat::class, ['agent' => $this->agent, 'conversation' => $conversation])->call('nameConversation');
+    openChat()->call('nameConversation');
+
+    Http::assertNothingSent();
+});
+
+test('la chat si rinomina dal titolo, e il nuovo nome resta', function () {
+    openChat()
+        ->call('startRename')
+        ->assertSet('newTitle', 'Trasferte')
+        ->set('newTitle', '  Trasferte a Milano ')
+        ->call('rename')
+        ->assertHasNoErrors()
+        ->assertSet('newTitle', null)
+        ->assertSee('Trasferte a Milano');
+
+    expect($this->conversation->fresh())
+        ->title->toBe('Trasferte a Milano')
+        ->titled_at->not->toBeNull();
+});
+
+test('un titolo vuoto o troppo lungo non si salva, e Annulla lascia quello di prima', function (string $title, string $rule) {
+    openChat()
+        ->call('startRename')
+        ->set('newTitle', $title)
+        ->call('rename')
+        ->assertHasErrors(['newTitle' => $rule])
+        ->call('cancelRename')
+        ->assertSet('newTitle', null);
+
+    expect($this->conversation->fresh()->title)->toBe('Trasferte');
+})->with([
+    'vuoto' => ['   ', 'required'],
+    'troppo lungo' => [str_repeat('a', 101), 'max'],
+]);
+
+test('due chat possono avere lo stesso titolo', function () {
+    $other = Conversation::factory()->for($this->agent)->create(['title' => 'Note spese']);
+
+    openChat()->call('startRename')->set('newTitle', 'Note spese')->call('rename')->assertHasNoErrors();
+
+    expect(Conversation::where('title', 'Note spese')->count())->toBe(2)
+        ->and($other->fresh()->session_id)->not->toBe($this->conversation->fresh()->session_id);
 });
 
 test('se il backend sbaglia la domanda resta, la risposta no, e si può riprovare', function () {
@@ -280,8 +406,8 @@ test('con il backend spento la chat lo dice e non salva risposte', function () {
     expect(Message::count())->toBe(1);
 });
 
-test('riaprendo la pagina, la domanda rimasta senza risposta si può rimandare', function () {
-    Message::factory()->for($this->conversation)->create(['content' => 'Massimale cena a Milano?']);
+test('riaprendo la pagina, la domanda già mandata e rimasta senza risposta si può rimandare', function () {
+    Message::factory()->for($this->conversation)->create(['content' => 'Massimale cena a Milano?', 'reply_started_at' => now()]);
 
     $this->get(route('agents.chat', ['agent' => $this->agent, 'conversation' => $this->conversation]))
         ->assertOk()
@@ -290,11 +416,21 @@ test('riaprendo la pagina, la domanda rimasta senza risposta si può rimandare',
 });
 
 test('reply() senza un messaggio appena inviato non chiama il backend', function () {
-    Message::factory()->for($this->conversation)->create(['content' => 'Domanda senza risposta']);
+    Message::factory()->for($this->conversation)->create(['content' => 'Domanda senza risposta', 'reply_started_at' => now()]);
 
-    openChat()->call('reply');
+    openChat()->assertSet('awaitingReply', false)->call('reply');
 
     Http::assertNothingSent();
+});
+
+test('una domanda salvata e mai mandata al backend parte da sola, una volta', function () {
+    fakeBackend(['POST agents/agente-di-prova/chat' => Http::response(contract('chat.200'))]);
+    Message::factory()->for($this->conversation)->create(['content' => 'Domanda rimasta lì']);
+
+    openChat()->assertSet('awaitingReply', true)->call('reply')->call('reply');
+    openChat()->assertSet('awaitingReply', false);
+
+    Http::assertSentCount(1);
 });
 
 test('lo snapshot di send() rimandato non richiama il backend: un messaggio contato arriva al modello una volta', function () {
@@ -338,7 +474,7 @@ test('se la richiesta di reply() fallisce prima di una risposta, la pagina offre
         ->set('message', 'Massimale cena a Milano?')
         ->call('send')
         // È il browser a chiamare replyFailed() quando la promise di reply() fallisce (500, 419, rete).
-        ->assertJs('$wire.reply().catch(() => $wire.replyFailed())')
+        ->assertSeeHtml('x-init="$wire.reply().catch(() => $wire.replyFailed())"')
         ->assertDontSee('Riprova')
         ->call('replyFailed')
         ->assertSet('awaitingReply', false)
@@ -349,7 +485,7 @@ test('se la richiesta di reply() fallisce prima di una risposta, la pagina offre
 });
 
 test('replyFailed() senza una risposta attesa non cambia niente', function () {
-    Message::factory()->for($this->conversation)->create(['content' => 'Domanda senza risposta']);
+    Message::factory()->for($this->conversation)->create(['content' => 'Domanda senza risposta', 'reply_started_at' => now()]);
 
     openChat()
         ->call('replyFailed')

@@ -38,6 +38,12 @@ class BackendClient
     /** Secondi concessi a /health: la dashboard non deve restare appesa a un backend bloccato. */
     private const HEALTH_TIMEOUT = 3;
 
+    /**
+     * Secondi concessi a /titles: il backend si ferma da sé a 20. Un titolo che tarda non
+     * deve tenere occupato un worker di PHP, e senza resta quello provvisorio.
+     */
+    private const TITLE_TIMEOUT = 25;
+
     /** Secondi di PHP oltre il timeout HTTP, per rispondere all'utente dopo la chiamata. */
     private const TIME_LIMIT_MARGIN = 30;
 
@@ -144,6 +150,24 @@ class BackendClient
             ]));
 
         return ChatReply::fromArray($response->json());
+    }
+
+    /**
+     * Il titolo di una chat, scritto dal modello a partire dal primo scambio.
+     */
+    public function title(string $message, string $answer): string
+    {
+        $response = $this->send(fn (PendingRequest $http) => $http
+            ->timeout(self::TITLE_TIMEOUT)
+            ->post($this->path('titles'), ['message' => $message, 'answer' => $answer]));
+
+        $title = $response->json('title');
+
+        if (! is_string($title) || trim($title) === '') {
+            throw new BackendException('Il backend non ha scritto un titolo per la chat.', $response->status());
+        }
+
+        return trim($title);
     }
 
     /**

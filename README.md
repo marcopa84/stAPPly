@@ -19,8 +19,9 @@ sugli agenti.
 - Ogni utente crea i propri **agenti**, ognuno con istruzioni proprie, i propri documenti
   (`.txt`, `.md`, `.pdf`, `.docx`, `.html`) e, se servono, le proprie tabelle (`.csv`, `.xlsx`)
   interrogabili in SQL.
-- **Chat con memoria**: ogni chat ha un nome, e riaprirla con lo stesso nome riprende la stessa
-  sessione.
+- **Chat con memoria**: si scrive subito, come nelle app di chat; il titolo lo scrive il modello
+  dopo la prima risposta e si può cambiare. Riaprendo una chat dallo storico l'agente ricorda lo
+  scambio.
 - **Risposte con le fonti**: gli id dei passaggi citati (`[regolamento-ferie-permessi-003]`)
   diventano chip che mostrano il file e il testo.
 - **Traccia sotto ogni risposta**: i tool chiamati con i loro argomenti e la strada seguita
@@ -255,7 +256,7 @@ Come si verificano i criteri del corso, applicati a ogni agente:
 
 | # | Criterio | Nell'interfaccia | Test automatici |
 |---|---|---|---|
-| 1 | Memoria di sessione | Chat → «Nuova chat» con un nome; ricreandola con lo stesso nome si riapre la stessa sessione e l'agente ricorda lo scambio | `test_memoria_della_sessione`; in `ChatTest.php` «lo stesso nome riapre la stessa chat…» |
+| 1 | Memoria di sessione | Chat → si scrive la prima domanda e la chat nasce con il suo titolo; chiusa e riaperta dallo storico «Le tue chat», l'agente ricorda lo scambio | `test_memoria_della_sessione`; in `ChatTest.php` «riaprendo una chat dallo storico il backend riceve la stessa sessione…» |
 | 2 | Ricerca con il nome del file | Nella traccia c'è la chiamata a `cerca_documenti`; ogni chip citato mostra file e passaggio | `test_indicizza_ogni_formato_del_seed`: ogni file del seed ritrovato dalla ricerca, con il nome |
 | 3 | Citazione, fuori tema | La risposta ha i chip `[id]`; una domanda fuori tema ha strada `nessuna` e nessun tool | `test_domanda_sui_documenti_cita_un_chunk`, `test_domanda_fuori_tema_rifiutata_senza_tool` |
 | 4 | Dati verificabili | La stessa domanda nella Console SQL, con una `SELECT` scritta a mano; una domanda mista ha strada `documenti+dati` | `test_domanda_che_chiede_documenti_e_dati_chiama_tutti_e_due_i_tool`: il numero confrontato con una somma fatta a mano sul CSV |

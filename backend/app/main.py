@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from uvicorn.logging import DefaultFormatter
 
-from app.api import agents, chat, documents, tables
+from app.api import agents, chat, documents, tables, titoli
 from app.api.dipendenze import controlla_chiave
 from app.api.errori import registra_gestori
 from app.api.schemi import Salute
@@ -61,7 +61,7 @@ def create_app() -> FastAPI:
         """Stato del servizio, senza chiave: serve a Laravel e al deploy per sapere se è su."""
         return {"status": "ok"}
 
-    for modulo in (documents, tables, chat, agents):
+    for modulo in (documents, tables, chat, agents, titoli):
         app.include_router(modulo.router, dependencies=[Depends(controlla_chiave)])
     return app
 

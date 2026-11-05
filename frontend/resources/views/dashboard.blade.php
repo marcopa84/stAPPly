@@ -62,7 +62,7 @@
 
         @if ($conversations->isEmpty())
             <flux:text>
-                Non hai ancora chat. Apri un agente e scegli «Chat»: con lo stesso nome ritrovi la conversazione e l'agente ricorda lo scambio.
+                Non hai ancora chat. Apri un agente e scegli «Chat»: ogni chat resta nello storico, e riaprendola l'agente ricorda lo scambio.
             </flux:text>
         @else
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

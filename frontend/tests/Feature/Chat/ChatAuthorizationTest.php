@@ -55,9 +55,20 @@ test('le azioni ricontrollano i permessi a ogni richiesta', function (string $ac
     Http::assertNothingSent();
 })->with([
     'invio' => ['send', ['message' => 'Ciao']],
-    'nuova chat' => ['open', ['title' => 'Intrusione']],
+    'titolo automatico' => ['nameConversation', []],
+    'rinomina' => ['rename', ['newTitle' => 'Intrusione']],
     'eliminazione' => ['delete', []],
 ]);
+
+test("un altro utente non apre chat nuove con l'agente", function () {
+    $chat = Livewire::actingAs($this->owner)->test(Chat::class, ['agent' => $this->agent]);
+
+    $this->actingAs($this->stranger);
+
+    $chat->set('message', 'Intrusione')->call('send')->assertForbidden();
+
+    expect(Conversation::count())->toBe(1);
+});
 
 test("una conversazione di un altro agente non si apre cambiando l'agente nell'URL", function () {
     $otherAgent = Agent::factory()->for($this->owner)->create();

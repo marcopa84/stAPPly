@@ -25,6 +25,8 @@ class ConversationFactory extends Factory
             // La conversazione è di chi possiede l'agente, come quelle create dalla chat.
             'user_id' => fn (array $attributes) => Agent::query()->whereKey($attributes['agent_id'])->value('user_id'),
             'title' => rtrim(fake()->unique()->sentence(3), '.'),
+            // Un titolo già definitivo; una chat appena nata ha titled_at null.
+            'titled_at' => now(),
         ];
     }
 }

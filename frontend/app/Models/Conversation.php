@@ -18,15 +18,20 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
- * Una chat con un agente, con il nome scelto dall'utente. La memoria che l'agente
- * usa sta nel backend, sotto il session_id; qui resta la copia dei messaggi da
- * mostrare, con la traccia di ogni risposta.
+ * Una chat con un agente. La memoria che l'agente usa sta nel backend, sotto il
+ * session_id; qui resta la copia dei messaggi da mostrare, con la traccia di ogni
+ * risposta.
+ *
+ * Il titolo nasce provvisorio dal primo messaggio; dopo la prima risposta lo scrive il
+ * modello, a meno che l'utente non l'abbia già cambiato. titled_at è null finché il
+ * titolo è provvisorio e nessuno ha ancora chiesto quello vero.
  *
  * @property int $id
  * @property int $agent_id
  * @property int $user_id
  * @property string $title
  * @property string $session_id
+ * @property Carbon|null $titled_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Agent $agent
@@ -39,6 +44,87 @@ class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
     use HasFactory;
+
+    /** Caratteri del titolo provvisorio, preso dal primo messaggio. */
+    public const PROVISIONAL_TITLE_LENGTH = 50;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'titled_at' => 'datetime',
+        ];
+    }
+
+    /**
+     * Il titolo di una chat appena nata: l'inizio della prima domanda, su una riga, tagliato
+     * tra due parole.
+     */
+    public static function provisionalTitle(string $message): string
+    {
+        $line = trim((string) preg_replace('/\s+/u', ' ', $message));
+
+        return Str::limit($line, self::PROVISIONAL_TITLE_LENGTH, '…', preserveWords: true);
+    }
+
+    /**
+     * Prende in carico la scelta del titolo: vero una volta sola per chat, anche se la
+     * richiesta arriva due volte. Ogni titolo costa una chiamata al modello.
+     */
+    public function claimTitling(): bool
+    {
+        $claimed = static::query()
+            ->whereKey($this->id)
+            ->whereNull('titled_at')
+            ->update(['titled_at' => now()]) === 1;
+
+        if ($claimed) {
+            $this->refresh();
+        }
+
+        return $claimed;
+    }
+
+    /**
+     * Mette il titolo scritto dal modello, solo se c'è ancora quello provvisorio: se nel
+     * frattempo l'utente ha rinominato la chat, vince il suo nome.
+     */
+    public function applyGeneratedTitle(string $provisional, string $title): bool
+    {
+        $applied = static::query()
+            ->whereKey($this->id)
+            ->where('title', $provisional)
+            ->update(['title' => Str::limit($title, 100, '')]) === 1;
+
+        if ($applied) {
+            $this->refresh();
+        }
+
+        return $applied;
+    }
+
+    /**
+     * Il nome scelto dall'utente: da qui in poi il titolo automatico non lo tocca più.
+     */
+    public function rename(string $title): void
+    {
+        $this->forceFill(['title' => $title, 'titled_at' => now()])->save();
+    }
+
+    /**
+     * La prima domanda e la prima risposta, se la chat ne ha una.
+     *
+     * @return array{0: Message, 1: Message}|null
+     */
+    public function firstExchange(): ?array
+    {
+        $question = $this->messages()->where('role', MessageRole::User)->oldest('id')->first();
+        $answer = $this->messages()->where('role', MessageRole::Assistant)->oldest('id')->first();
+
+        return $question !== null && $answer !== null ? [$question, $answer] : null;
+    }
 
     /**
      * Il ULID in minuscolo rispetta la regex di session_id del backend e, a differenza

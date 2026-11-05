@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from app.core import agent
 from app.main import create_app
 from tests.conftest import CONTRATTO, NOTE_SPESE, SEED, contratto, forma
-from tests.modello_finto import ModelloFinto, chiama, cita_il_primo_passaggio
+from tests.modello_finto import ModelloFinto, chiama, cita_il_primo_passaggio, scrive
 
 CHIAVE = "chiave-di-prova"
 CIRCOLARI = SEED / "valtesa" / "documenti" / "circolari-personale-2026.html"
@@ -90,6 +90,12 @@ def clone(client: TestClient, *_: object) -> httpx.Response:
     return client.post("/agents/01jbx3k6v2c8m0q4w5t7y9z1ab/clone", json={"from": "demo-valtesa"})
 
 
+def titolo(client: TestClient, monkeypatch: pytest.MonkeyPatch, *_: object) -> httpx.Response:
+    usa_modello(monkeypatch, ModelloFinto(scrive("Note spese in attesa di approvazione")))
+    scambio = {"message": "Quante note spese sono in attesa?", "answer": "Sono 56."}
+    return client.post("/titles", json=scambio)
+
+
 def errore(client: TestClient, *_: object) -> httpx.Response:
     files = {"file": ("regolamento.pdf", b"Non sono un PDF.")}
     return client.post("/agents/demo-valtesa/documents", files=files)
@@ -105,6 +111,7 @@ RISPOSTE: dict[str, Callable[..., httpx.Response]] = {
     "chat.200.json": chat,
     "chat.max-turns.200.json": chat_max_turns,
     "agents.clone.201.json": clone,
+    "titles.200.json": titolo,
     "error.json": errore,
 }
 

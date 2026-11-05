@@ -10,14 +10,19 @@ use App\Support\UsageLimits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * La chat con un agente: le conversazioni dell'utente con quell'agente e i messaggi di
- * quella aperta, con sotto ogni risposta la traccia (strada, tool chiamati, passaggi
+ * La chat con un agente: lo storico delle chat dell'utente con quell'agente e i messaggi
+ * di quella aperta, con sotto ogni risposta la traccia (strada, tool chiamati, passaggi
  * citati) che serve a verificare i criteri di CONSEGNA.md.
+ *
+ * Come nelle app di chat, si comincia a scrivere senza dare un nome: la chat nasce con la
+ * prima domanda, con un titolo provvisorio, e dopo la prima risposta il modello ne scrive
+ * uno (nameConversation). L'utente la può rinominare quando vuole. Riaprendola dallo
+ * storico si torna alla stessa sessione del backend, ed è così che l'agente ricorda lo
+ * scambio (criterio 1).
  *
  * Un messaggio parte in due richieste: send() lo salva e torna subito, così compare
  * mentre l'agente lavora; reply() chiede la risposta al backend. Se il backend non
@@ -36,15 +41,16 @@ class Chat extends Component
     #[Locked]
     public ?Conversation $conversation = null;
 
-    /** Il nome della chat da aprire o da creare. */
-    public string $title = '';
-
     public string $message = '';
 
+    /** Il titolo che si sta scrivendo per la chat aperta; null quando non la si rinomina. */
+    public ?string $newTitle = null;
+
     /**
-     * Acceso da send() e retry(), spento da reply() o replyFailed(): mentre la risposta
-     * è attesa la pagina non offre Riprova. Non protegge il backend: vive nello snapshot,
-     * che il browser può rimandare; lo fa la presa in carico della domanda in reply().
+     * Acceso quando una domanda aspetta la risposta, spento da reply() o replyFailed():
+     * mentre è acceso la pagina non offre Riprova e lancia reply(). Non protegge il backend:
+     * vive nello snapshot, che il browser può rimandare; lo fa la presa in carico della
+     * domanda in reply().
      */
     #[Locked]
     public bool $awaitingReply = false;
@@ -68,6 +74,13 @@ class Chat extends Component
 
         $this->agent = $agent;
         $this->conversation = $conversation;
+
+        // Una domanda salvata e mai mandata al backend parte da sola: è la prima di una chat
+        // appena nata, che arriva qui dal redirect di send(), o una rimasta lì perché la
+        // pagina si è chiusa subito. È già contata nei limiti, e reply() la prende in carico
+        // una volta sola. Una domanda già mandata e rimasta senza risposta offre Riprova.
+        $question = $conversation?->pendingQuestion();
+        $this->awaitingReply = $question !== null && $question->reply_started_at === null;
     }
 
     /**
@@ -76,8 +89,8 @@ class Chat extends Component
     protected function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:100'],
             'message' => ['required', 'string', 'max:4000'],
+            'newTitle' => ['required', 'string', 'max:100'],
         ];
     }
 
@@ -87,40 +100,25 @@ class Chat extends Component
     protected function messages(): array
     {
         return [
-            'title.required' => 'Dai un nome alla chat: con lo stesso nome la ritrovi, e l\'agente ricorda la conversazione.',
-            'title.max' => 'Il nome della chat può avere al massimo 100 caratteri.',
             'message.required' => 'Scrivi una domanda.',
             'message.max' => 'Il messaggio può avere al massimo 4000 caratteri.',
+            'newTitle.required' => 'Il titolo della chat non può essere vuoto.',
+            'newTitle.max' => 'Il titolo della chat può avere al massimo 100 caratteri.',
         ];
-    }
-
-    /**
-     * Apre la chat con questo nome, oppure la crea. Lo stesso nome riporta alla stessa
-     * sessione del backend, ed è così che l'agente ricorda lo scambio (criterio 1).
-     * Maiuscole e minuscole non contano ("ferie 2026" riapre "Ferie 2026", che resta
-     * scritta com'era): il confronto è in PHP perché lower() di SQLite ignora gli accenti.
-     */
-    public function open(): void
-    {
-        $this->authorize('view', $this->agent);
-
-        $this->title = trim($this->title);
-        $this->validateOnly('title');
-
-        $conversation = $this->agent->conversations()
-            ->whereBelongsTo(Auth::user())
-            ->get()
-            ->first(fn (Conversation $existing): bool => Str::lower($existing->title) === Str::lower($this->title))
-            ?? $this->agent->conversations()->create(['user_id' => Auth::id(), 'title' => $this->title]);
-
-        $this->redirectRoute('agents.chat', ['agent' => $this->agent, 'conversation' => $conversation], navigate: true);
     }
 
     public function send(): void
     {
+        $this->message = trim($this->message);
+
+        if ($this->conversation === null) {
+            $this->start();
+
+            return;
+        }
+
         $conversation = $this->writableConversation();
 
-        $this->message = trim($this->message);
         $this->validateOnly('message');
 
         $reason = $this->throttle();
@@ -134,7 +132,7 @@ class Chat extends Component
         $conversation->ask($this->message);
 
         $this->reset('message', 'error');
-        $this->expectReply();
+        $this->awaitingReply = true;
     }
 
     /**
@@ -160,7 +158,7 @@ class Chat extends Component
         $question->releaseForReply();
 
         $this->error = null;
-        $this->expectReply();
+        $this->awaitingReply = true;
     }
 
     /**
@@ -198,6 +196,11 @@ class Chat extends Component
         }
 
         $conversation->recordReply($reply);
+
+        // Il titolo con un'altra richiesta, così la risposta compare subito.
+        if ($conversation->titled_at === null) {
+            $this->js('$wire.nameConversation()');
+        }
     }
 
     /**
@@ -213,6 +216,57 @@ class Chat extends Component
 
         $this->awaitingReply = false;
         $this->error = 'La risposta non è arrivata: puoi riprovare.';
+    }
+
+    /**
+     * Dopo la prima risposta il modello scrive il titolo della chat. Una volta sola per
+     * chat, anche se la richiesta arriva più volte: ogni titolo è una chiamata al modello.
+     * Se il backend non risponde resta il titolo provvisorio, e un nome dato nel frattempo
+     * dall'utente non viene sovrascritto.
+     */
+    public function nameConversation(BackendClient $backend): void
+    {
+        $conversation = $this->writableConversation();
+        $exchange = $conversation->firstExchange();
+
+        if ($exchange === null || ! $conversation->claimTitling()) {
+            return;
+        }
+
+        [$question, $answer] = $exchange;
+        $provisional = $conversation->title;
+
+        try {
+            $title = $backend->title($question->content, $answer->content);
+        } catch (BackendException) {
+            return;
+        }
+
+        $conversation->applyGeneratedTitle($provisional, $title);
+    }
+
+    public function startRename(): void
+    {
+        $this->newTitle = $this->writableConversation()->title;
+        $this->resetValidation('newTitle');
+    }
+
+    public function rename(): void
+    {
+        $conversation = $this->writableConversation();
+
+        $this->newTitle = trim((string) $this->newTitle);
+        $this->validateOnly('newTitle');
+
+        $conversation->rename($this->newTitle);
+
+        $this->newTitle = null;
+    }
+
+    public function cancelRename(): void
+    {
+        $this->newTitle = null;
+        $this->resetValidation('newTitle');
     }
 
     /**
@@ -254,8 +308,36 @@ class Chat extends Component
             'messages' => $messages,
             'pending' => $messages->last()?->isFromUser() ?? false,
         ])->title($this->conversation === null
-            ? "Chat con {$this->agent->name}"
+            ? "Nuova chat · {$this->agent->name}"
             : "{$this->conversation->title} · {$this->agent->name}");
+    }
+
+    /**
+     * La prima domanda di una chat nuova: la chat nasce qui, con il titolo provvisorio, e
+     * la pagina passa al suo indirizzo, dove la risposta parte da sola (vedi mount). Prima
+     * si valida e si conta il messaggio: un invio fermato non lascia chat vuote nello storico.
+     */
+    private function start(): void
+    {
+        $this->authorize('view', $this->agent);
+
+        $this->validateOnly('message');
+
+        $reason = $this->throttle();
+
+        if ($reason !== null) {
+            $this->addError('message', $reason);
+
+            return;
+        }
+
+        $conversation = $this->agent->conversations()->create([
+            'user_id' => Auth::id(),
+            'title' => Conversation::provisionalTitle($this->message),
+        ]);
+        $conversation->ask($this->message);
+
+        $this->redirectRoute('agents.chat', ['agent' => $this->agent, 'conversation' => $conversation], navigate: true);
     }
 
     /**
@@ -269,17 +351,6 @@ class Chat extends Component
         $this->authorize('update', $conversation);
 
         return $conversation;
-    }
-
-    /**
-     * La risposta arriva con una seconda richiesta: intanto la pagina mostra la domanda
-     * e la mascotte che pensa.
-     */
-    private function expectReply(): void
-    {
-        $this->awaitingReply = true;
-
-        $this->js('$wire.reply().catch(() => $wire.replyFailed())');
     }
 
     /**

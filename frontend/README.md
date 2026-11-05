@@ -125,9 +125,13 @@ utenti.
   (`Show`) ha una sezione per scheda, ognuna un componente a sé (`Documents`, `Tables` e
   `SqlConsole`, che compare solo se l'agente ha tabelle).
 - `app/Livewire/Agents/Chat.php` (rotta `agents/{agent}/chat/{conversation?}`): le chat
-  dell'utente con l'agente. Ogni `Conversation` ha un nome e un `session_id` (ULID in minuscolo)
-  che il backend usa come memoria: riaprire una chat con lo stesso nome (maiuscole e minuscole
-  non contano) riporta alla stessa sessione. Un messaggio parte in due richieste Livewire (`send()` lo salva, `reply()` chiede la
+  dell'utente con l'agente, come nelle app di chat. La pagina si apre su una chat nuova: la
+  `Conversation` nasce con la prima domanda, con un titolo provvisorio (l'inizio della domanda),
+  e dopo la prima risposta `nameConversation()` chiede il titolo al backend (`POST /titles`).
+  Lo fa una volta sola per chat (`titled_at`, preso in carico con un `UPDATE` condizionale), e
+  mette il titolo solo se c'è ancora quello provvisorio: se nel frattempo l'utente ha rinominato
+  la chat, vince il suo nome. Ogni chat ha un `session_id` (ULID in minuscolo) che il backend
+  usa come memoria: riaprirla dallo storico riporta alla stessa sessione. Un messaggio parte in due richieste Livewire (`send()` lo salva, `reply()` chiede la
   risposta), così resta in pagina mentre l'agente lavora e, se il backend non risponde, si può
   riprovare. Il limite si conta in `send()` e in "Riprova"; `reply()` prende in carico la domanda
   con un `UPDATE` condizionale su `messages.reply_started_at`, così la stessa richiesta rimandata

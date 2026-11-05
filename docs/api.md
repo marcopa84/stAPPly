@@ -61,6 +61,7 @@ Un agente "esiste" per il backend appena ha dati: le liste di un agente mai vist
 | POST | `/agents/{agent_id}/sql` | `{"sql": "SELECT …"}` | `200`, al massimo 200 righe | [`sql.200.json`](contract/sql.200.json) |
 | POST | `/agents/{agent_id}/chat` | vedi sotto | `200` | [`chat.200.json`](contract/chat.200.json), [`chat.max-turns.200.json`](contract/chat.max-turns.200.json) |
 | DELETE | `/agents/{agent_id}/sessions/{session_id}` | — | `204`, anche se la sessione non c'era | — |
+| POST | `/titles` | `{"message": "…", "answer": "…"}` | `200` | [`titles.200.json`](contract/titles.200.json) |
 | POST | `/agents/{agent_id}/clone` | `{"from": "<agent_id da copiare>"}` | `201` | [`agents.clone.201.json`](contract/agents.clone.201.json) |
 | DELETE | `/agents/{agent_id}` | — | `204`, anche se l'agente non aveva dati | — |
 | — | qualunque errore | — | `4xx`/`5xx` | [`error.json`](contract/error.json) |
@@ -86,6 +87,22 @@ agenti demo e può cambiarla senza toccare quella degli altri.
 | `from` senza documenti né tabelle | `404` |
 | `agent_id` ha già documenti o tabelle | `409`: la copia non sovrascrive |
 | `from` uguale ad `agent_id`, o non conforme alla regex | `422` |
+
+### `POST /titles`
+
+Il titolo di una chat, scritto dal modello a partire dal primo scambio: Laravel apre la chat al
+primo messaggio con un titolo provvisorio e, dopo la prima risposta, chiede questo. È una
+chiamata senza tool e senza sessione, con un tempo massimo di 20 secondi; non dipende
+dall'agente.
+
+| Campo | Vincoli |
+|---|---|
+| `message` | 1–4000 caratteri: la prima domanda |
+| `answer` | 1–50000 caratteri: la prima risposta (al modello ne arriva solo l'inizio) |
+
+Risposta: `title`, da 2 a 6 parole in italiano, al massimo 60 caratteri, senza virgolette né
+punto finale. Se il modello non risponde o non scrive un titolo: `502`, e Laravel tiene quello
+provvisorio.
 
 ### `POST /agents/{agent_id}/chat`
 

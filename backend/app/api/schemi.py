@@ -99,3 +99,13 @@ class RispostaChat(BaseModel):
     route: Literal["documenti", "dati", "documenti+dati", "nessuna"]
     tools: list[ToolChiamato]
     sources: list[Fonte]
+
+
+class RichiestaTitolo(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    # La risposta può essere lunga (un elenco, una tabella): al modello ne arriva solo l'inizio.
+    answer: str = Field(min_length=1, max_length=50_000)
+
+
+class Titolo(BaseModel):
+    title: str

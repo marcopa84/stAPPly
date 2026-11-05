@@ -30,21 +30,16 @@
     @endif
 
     <div class="mt-6 grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside class="space-y-6">
-            <form wire:submit="open">
-                <flux:field>
-                    <flux:label>Nuova chat</flux:label>
-
-                    <div class="flex gap-2">
-                        <flux:input wire:model="title" maxlength="100" placeholder="Ferie 2026" />
-                        <flux:button type="submit" icon="plus">Apri</flux:button>
-                    </div>
-
-                    <flux:error name="title" />
-
-                    <flux:description>Un nome già usato riapre quella chat: l'agente ricorda lo scambio.</flux:description>
-                </flux:field>
-            </form>
+        <aside class="space-y-4">
+            <flux:button
+                :href="route('agents.chat', $agent)"
+                wire:navigate
+                icon="plus"
+                :variant="$conversation ? 'outline' : 'primary'"
+                class="w-full"
+            >
+                Nuova chat
+            </flux:button>
 
             <nav aria-label="Le tue chat con {{ $agent->name }}" class="space-y-1">
                 <flux:heading size="sm" class="mb-2">Le tue chat</flux:heading>
@@ -67,117 +62,144 @@
                         <span class="shrink-0 text-xs text-zinc-400">{{ $item->updated_at?->diffForHumans(short: true) }}</span>
                     </a>
                 @empty
-                    <flux:text size="sm">Non hai ancora chat con questo agente.</flux:text>
+                    <flux:text size="sm">Le chat che apri restano qui: riaprendone una, l'agente ricorda lo scambio.</flux:text>
                 @endforelse
             </nav>
         </aside>
 
         <div class="min-w-0">
-            @if ($conversation)
-                <div class="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-700">
-                    <div class="flex items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
-                        <flux:heading size="lg" level="2" class="truncate">{{ $conversation->title }}</flux:heading>
+            <div class="flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-700">
+                <div class="flex min-h-14 items-center justify-between gap-3 border-b border-zinc-200 px-4 py-2 dark:border-zinc-700">
+                    @if (! $conversation)
+                        <flux:heading size="lg" level="2">Nuova chat</flux:heading>
+                    @elseif ($newTitle !== null)
+                        <form wire:submit="rename" class="flex flex-1 items-start gap-2" x-on:keydown.escape="$wire.cancelRename()">
+                            <div class="flex-1">
+                                {{-- autofocus vale solo al caricamento della pagina: il campo lo aggiunge Livewire. --}}
+                                <flux:input wire:model="newTitle" maxlength="100" size="sm" aria-label="Titolo della chat" x-init="$nextTick(() => { $el.focus(); $el.select() })" />
+                                <flux:error name="newTitle" />
+                            </div>
+                            <flux:button type="submit" size="sm" variant="primary">Salva</flux:button>
+                            <flux:button type="button" size="sm" variant="ghost" wire:click="cancelRename">Annulla</flux:button>
+                        </form>
+                    @else
+                        <div class="flex min-w-0 items-center gap-1">
+                            <flux:heading size="lg" level="2" class="truncate">{{ $conversation->title }}</flux:heading>
+                            <flux:button size="sm" variant="ghost" icon="pencil-square" wire:click="startRename" aria-label="Rinomina la chat" />
+                        </div>
 
                         <flux:modal.trigger name="delete-conversation">
                             <flux:button size="sm" variant="ghost" icon="trash">Elimina</flux:button>
                         </flux:modal.trigger>
+                    @endif
+                </div>
+
+                @if ($messages->isEmpty())
+                    <div class="flex flex-col items-center gap-3 px-4 py-12 text-center">
+                        <x-mascot state="idle" class="w-28" />
+                        <flux:heading size="lg">Di cosa vuoi parlare con {{ $agent->name }}?</flux:heading>
+                        <flux:text class="max-w-md">
+                            Scrivi la prima domanda: la chat si apre da sola e il titolo arriva dopo la prima risposta.
+                            La ritrovi nello storico, e riaprendola l'agente ricorda quello che vi siete detti.
+                        </flux:text>
                     </div>
+                @else
+                    {{-- column-reverse tiene lo scorrimento in fondo: l'ultimo messaggio resta in vista senza JavaScript. --}}
+                    <div class="flex max-h-[70dvh] min-h-72 flex-col-reverse overflow-y-auto lg:max-h-[calc(100dvh-24rem)]">
+                        <div class="space-y-6 p-4" role="log" aria-label="Messaggi della chat">
+                            @foreach ($messages as $item)
+                                @if ($item->isFromUser())
+                                    <div class="flex flex-col items-end gap-1" wire:key="message-{{ $item->id }}">
+                                        <div class="max-w-[85%] whitespace-pre-line break-words rounded-2xl rounded-br-sm bg-accent/10 px-4 py-2 text-zinc-800 dark:text-zinc-100">{{ $item->content }}</div>
 
-                    @if ($messages->isEmpty())
-                        <div class="flex flex-col items-center gap-3 px-4 py-12 text-center">
-                            <x-mascot state="idle" class="w-28" />
-                            <flux:text>Fai la prima domanda a {{ $agent->name }}.</flux:text>
-                        </div>
-                    @else
-                        {{-- column-reverse tiene lo scorrimento in fondo: l'ultimo messaggio resta in vista senza JavaScript. --}}
-                        <div class="flex max-h-[70dvh] min-h-72 flex-col-reverse overflow-y-auto lg:max-h-[calc(100dvh-24rem)]">
-                            <div class="space-y-6 p-4" role="log" aria-label="Messaggi della chat">
-                                @foreach ($messages as $item)
-                                    @if ($item->isFromUser())
-                                        <div class="flex flex-col items-end gap-1" wire:key="message-{{ $item->id }}">
-                                            <div class="max-w-[85%] whitespace-pre-line break-words rounded-2xl rounded-br-sm bg-accent/10 px-4 py-2 text-zinc-800 dark:text-zinc-100">{{ $item->content }}</div>
-
-                                            @if (! $loop->last && $messages[$loop->index + 1]->isFromUser())
-                                                <flux:text size="sm">Senza risposta</flux:text>
-                                            @endif
+                                        @if (! $loop->last && $messages[$loop->index + 1]->isFromUser())
+                                            <flux:text size="sm">Senza risposta</flux:text>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="flex items-start gap-3" wire:key="message-{{ $item->id }}">
+                                        <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                                            <x-app-logo-icon class="size-5" aria-hidden="true" />
                                         </div>
-                                    @else
-                                        <div class="flex items-start gap-3" wire:key="message-{{ $item->id }}">
-                                            <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                                                <x-app-logo-icon class="size-5" aria-hidden="true" />
-                                            </div>
 
-                                            <div class="min-w-0 flex-1">
-                                                <div class="chat-answer">{{ $item->answerHtml() }}</div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="chat-answer">{{ $item->answerHtml() }}</div>
 
-                                                @include('livewire.agents.partials.trace', ['reply' => $item])
-                                            </div>
+                                            @include('livewire.agents.partials.trace', ['reply' => $item])
                                         </div>
-                                    @endif
-                                @endforeach
+                                    </div>
+                                @endif
+                            @endforeach
 
-                                <div wire:loading.flex wire:target="reply" class="items-center gap-3" role="status">
+                            @if ($awaitingReply && $pending)
+                                {{-- La risposta parte appena questo elemento compare: dopo send(), dopo Riprova o
+                                     all'arrivo da una chat appena nata. La chiave è la domanda, così non riparte
+                                     a ogni aggiornamento della pagina. --}}
+                                <span hidden wire:key="reply-{{ $messages->last()->id }}" x-init="$wire.reply().catch(() => $wire.replyFailed())"></span>
+
+                                <div class="flex items-center gap-3" role="status">
                                     <x-mascot state="thinking" decorative class="w-16 shrink-0" />
                                     <flux:text>{{ $agent->name }} sta cercando la risposta…</flux:text>
                                 </div>
+                            @elseif ($pending)
+                                <div class="flex items-start gap-3" wire:loading.remove wire:target="retry">
+                                    <x-mascot :state="$error ? 'confused' : 'idle'" decorative class="w-16 shrink-0" />
 
-                                @if ($pending && ! $awaitingReply)
-                                    <div class="flex items-start gap-3" wire:loading.remove wire:target="retry, reply">
-                                        <x-mascot :state="$error ? 'confused' : 'idle'" decorative class="w-16 shrink-0" />
+                                    <flux:callout :variant="$error ? 'danger' : 'warning'" icon="exclamation-triangle" class="flex-1">
+                                        <flux:callout.heading>
+                                            {{ $error ? 'La risposta non è arrivata' : 'Questa domanda è rimasta senza risposta' }}
+                                        </flux:callout.heading>
+                                        <flux:callout.text>
+                                            {{ $error ?? "Puoi rimandarla all'agente." }}
+                                        </flux:callout.text>
 
-                                        <flux:callout :variant="$error ? 'danger' : 'warning'" icon="exclamation-triangle" class="flex-1">
-                                            <flux:callout.heading>
-                                                {{ $error ? 'La risposta non è arrivata' : 'Questa domanda è rimasta senza risposta' }}
-                                            </flux:callout.heading>
-                                            <flux:callout.text>
-                                                {{ $error ?? "Puoi rimandarla all'agente." }}
-                                            </flux:callout.text>
-
-                                            <x-slot name="actions">
-                                                <flux:button size="sm" icon="arrow-path" wire:click="retry">Riprova</flux:button>
-                                            </x-slot>
-                                        </flux:callout>
-                                    </div>
-                                @endif
-                            </div>
+                                        <x-slot name="actions">
+                                            <flux:button size="sm" icon="arrow-path" wire:click="retry">Riprova</flux:button>
+                                        </x-slot>
+                                    </flux:callout>
+                                </div>
+                            @endif
                         </div>
-                    @endif
+                    </div>
+                @endif
 
-                    {{-- Durante l'attesa la textarea è readonly e non disabled: un campo disattivato perde il focus,
-                         e il follow-up andrebbe scritto dopo un clic. requestSubmit() non guarda il pulsante: l'Invio si ferma qui. --}}
-                    <form wire:submit="send" class="border-t border-zinc-200 p-3 dark:border-zinc-700">
-                        <div class="flex items-end gap-2">
-                            <div class="flex-1">
-                                <flux:textarea
-                                    wire:model="message"
-                                    rows="2"
-                                    resize="none"
-                                    maxlength="4000"
-                                    placeholder="Scrivi una domanda…"
-                                    aria-label="Messaggio per {{ $agent->name }}"
-                                    wire:loading.attr="readonly"
-                                    wire:target="send, reply, retry"
-                                    x-on:keydown.enter="if (! $event.shiftKey && ! $event.isComposing) { $event.preventDefault(); if (! $el.readOnly) $el.form.requestSubmit() }"
-                                />
-                            </div>
-
-                            <flux:button type="submit" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="send, reply, retry">
-                                Invia
-                            </flux:button>
+                {{-- Durante l'attesa la textarea è readonly e non disabled: un campo disattivato perde il focus,
+                     e il follow-up andrebbe scritto dopo un clic. requestSubmit() non guarda il pulsante: l'Invio si ferma qui. --}}
+                <form wire:submit="send" class="border-t border-zinc-200 p-3 dark:border-zinc-700">
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <flux:textarea
+                                wire:model="message"
+                                rows="2"
+                                resize="none"
+                                maxlength="4000"
+                                placeholder="Scrivi una domanda…"
+                                aria-label="Messaggio per {{ $agent->name }}"
+                                :autofocus="! $conversation"
+                                wire:loading.attr="readonly"
+                                wire:target="send, reply, retry"
+                                x-on:keydown.enter="if (! $event.shiftKey && ! $event.isComposing) { $event.preventDefault(); if (! $el.readOnly) $el.form.requestSubmit() }"
+                            />
                         </div>
 
-                        <flux:error name="message" class="mt-2" />
+                        <flux:button type="submit" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="send, reply, retry">
+                            Invia
+                        </flux:button>
+                    </div>
 
-                        <flux:text size="sm" class="mt-2 hidden sm:block">Invio per mandare, Maiusc+Invio per andare a capo.</flux:text>
-                    </form>
-                </div>
+                    <flux:error name="message" class="mt-2" />
 
+                    <flux:text size="sm" class="mt-2 hidden sm:block">Invio per mandare, Maiusc+Invio per andare a capo.</flux:text>
+                </form>
+            </div>
+
+            @if ($conversation)
                 <flux:modal name="delete-conversation" @close="$set('deleteError', null)" focusable class="max-w-lg">
                     <div class="space-y-6">
                         <div>
                             <flux:heading size="lg">Eliminare la chat «{{ $conversation->title }}»?</flux:heading>
                             <flux:text class="mt-2">
-                                I messaggi spariscono e l'agente dimentica la conversazione: una chat nuova con lo stesso nome ripartirà da zero.
+                                I messaggi spariscono e l'agente dimentica la conversazione.
                             </flux:text>
                         </div>
 
@@ -194,15 +216,6 @@
                         </div>
                     </div>
                 </flux:modal>
-            @else
-                <div class="flex flex-col items-center gap-4 rounded-xl border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-600">
-                    <x-mascot state="idle" class="w-32" />
-                    <flux:heading size="lg">Scegli una chat o iniziane una nuova</flux:heading>
-                    <flux:text class="max-w-md">
-                        Dai un nome alla chat, per esempio «Ferie 2026». Se la riapri con lo stesso nome,
-                        {{ $agent->name }} ricorda quello che vi siete detti.
-                    </flux:text>
-                </div>
             @endif
         </div>
     </div>

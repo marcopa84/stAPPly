@@ -168,6 +168,28 @@ it('una copia rifiutata arriva come BackendException con il detail', function ()
         ->toThrow(BackendException::class, "L'agente di destinazione ha già dei dati.");
 });
 
+it('chiede il titolo di una chat dal primo scambio', function () {
+    fakeBackend(['POST titles' => Http::response(contract('titles.200'))]);
+
+    expect($this->backend->title('Quante note spese sono in attesa?', 'Sono 56.'))
+        ->toBe('Note spese in attesa di approvazione');
+
+    Http::assertSent(fn (Request $request) => sentWithKey($request)
+        && $request->method() === 'POST'
+        && $request->url() === 'http://backend.test/titles'
+        && $request->data() === ['message' => 'Quante note spese sono in attesa?', 'answer' => 'Sono 56.']);
+});
+
+it('un titolo mancante o vuoto arriva come BackendException', function (int $status, array $body) {
+    fakeBackend(['POST titles' => Http::response($body, $status)]);
+
+    expect(fn () => $this->backend->title('Domanda', 'Risposta'))->toThrow(BackendException::class);
+})->with([
+    'il modello non risponde' => [502, ['detail' => 'Il modello non risponde.']],
+    'titolo vuoto' => [200, ['title' => '  ']],
+    'senza titolo' => [200, []],
+]);
+
 it('cancella con DELETE', function (string $method, array $arguments, string $path) {
     fakeBackend(["DELETE {$path}" => Http::response(status: 204)]);
 
