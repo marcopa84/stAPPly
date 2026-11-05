@@ -54,6 +54,11 @@ _MAX_LUNGHEZZA_VALORE = 200_000
 MAX_CARATTERI_RISULTATO = 1_000_000
 _CANDIDATI_SEPARATORE = (",", ";")
 _RECORD_PER_IL_SEPARATORE = 20
+# Una colonna di testo con al massimo tanti valori distinti, e tutti brevi, è una categoria
+# (stato, reparto, tipo): lo schema per il modello ne elenca i valori. Le città dei dati demo
+# sono 14 e restano fuori: per quelle c'è SELECT DISTINCT.
+MAX_VALORI_ELENCATI = 12
+MAX_LUNGHEZZA_VALORE_ELENCATO = 40
 
 # Prima della parola chiave possono esserci spazi e commenti.
 _PREAMBOLO_SQL = re.compile(r"(?:\s+|--[^\n]*(?:\n|$)|/\*.*?\*/)*", re.DOTALL)
@@ -223,13 +228,56 @@ def cancella_tabella(agent_id: str, table: str) -> None:
 
 
 def schema_testo(agent_id: str) -> str:
-    """Una riga `tabella(colonna TIPO, ...)` per tabella: va nella descrizione di query_db,
-    così il modello scrive le query sui nomi veri. Stringa vuota se non ci sono tabelle."""
+    """Lo schema per la descrizione di query_db, così il modello scrive le query sui nomi
+    veri: una riga `tabella(colonna TIPO, ...)` per tabella e, sotto, i valori delle colonne
+    di testo che ne hanno pochi. Stringa vuota se non ci sono tabelle.
+
+    I valori servono perché il modello li indovina: alla domanda «quante note spese sono in
+    attesa di approvazione?» filtrava `stato = 'in attesa di approvazione'` invece di
+    `'in attesa'`, e rispondeva zero."""
+    percorso = storage.percorso_tabelle(agent_id)
+    if not percorso.exists():
+        return ""
     righe = []
-    for tabella in lista_tabelle(agent_id):
-        colonne = ", ".join(f"{c['name']} {c['type']}" for c in tabella["columns"])
-        righe.append(f"{tabella['table']}({colonne})")
+    with closing(_connetti_sola_lettura(percorso)) as con:
+        for tabella in lista_tabelle(agent_id):
+            colonne = ", ".join(f"{c['name']} {c['type']}" for c in tabella["columns"])
+            righe.append(f"{tabella['table']}({colonne})")
+            for colonna in tabella["columns"]:
+                if colonna["type"] != "TEXT":
+                    continue
+                valori = _valori_elencabili(con, tabella["table"], colonna["name"])
+                if valori:
+                    elenco = ", ".join(_letterale(v) for v in valori)
+                    righe.append(f"  valori di {colonna['name']}: {elenco}")
     return "\n".join(righe)
+
+
+def _valori_elencabili(con: sqlite3.Connection, tabella: str, colonna: str) -> list[str]:
+    """I valori distinti di una colonna di testo, in ordine, se sono al massimo
+    MAX_VALORI_ELENCATI e tutti brevi: una colonna di categorie (stato, reparto, tipo), non
+    di nomi o testo libero. Lista vuota altrimenti."""
+    # Senza ORDER BY, LIMIT ferma la ricerca appena i valori sono troppi anche su una tabella
+    # grande; l'ordine si mette dopo, sui pochi valori rimasti.
+    valori = [
+        riga[0]
+        for riga in con.execute(
+            f"SELECT DISTINCT {_quota(colonna)} FROM {_quota(tabella)} "
+            f"WHERE {_quota(colonna)} IS NOT NULL LIMIT {MAX_VALORI_ELENCATI + 1}"
+        )
+    ]
+    if len(valori) > MAX_VALORI_ELENCATI or not all(
+        isinstance(v, str) and 0 < len(v) <= MAX_LUNGHEZZA_VALORE_ELENCATO and "\n" not in v
+        for v in valori
+    ):
+        return []
+    return sorted(valori)
+
+
+def _letterale(valore: str) -> str:
+    """Un valore come letterale SQL: il modello lo copia così com'è nella query, e le virgolette
+    lo segnano come dato, non come istruzione (le tabelle le carica l'utente)."""
+    return "'" + valore.replace("'", "''") + "'"
 
 
 def esegui_select(

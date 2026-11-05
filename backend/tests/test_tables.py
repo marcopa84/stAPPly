@@ -444,10 +444,28 @@ def test_dopo_l_ultima_tabella_l_agente_non_ha_tabelle():
 def test_schema_testo():
     importa_note_spese()
     tables.importa_tabella(AGENTE, "assenze.csv", b"id,giorni\n1,2.5\n")
+    # Le città sono 14, più di MAX_VALORI_ELENCATI, e le date sono tutte diverse: niente elenco.
     assert tables.schema_testo(AGENTE) == (
         "assenze(id INTEGER, giorni REAL)\n"
         "note_spese(id INTEGER, dipendente_id INTEGER, data TEXT, citta TEXT, voce TEXT, "
-        "importo REAL, stato TEXT)"
+        "importo REAL, stato TEXT)\n"
+        "  valori di voce: 'cena', 'hotel', 'km', 'pranzo', 'treno'\n"
+        "  valori di stato: 'approvata', 'in attesa', 'respinta'"
+    )
+
+
+def test_schema_testo_elenca_solo_le_colonne_di_categorie():
+    lungo = "x" * (tables.MAX_LUNGHEZZA_VALORE_ELENCATO + 1)
+    righe = ["codice,ufficio,nota"]
+    for i in range(tables.MAX_VALORI_ELENCATI + 1):
+        ufficio = ["Sede dell'Aquila", "Roma", ""][i % 3]  # la cella vuota è NULL: non conta
+        righe.append(f"c{i:02d},{ufficio},{lungo if i == 0 else 'breve'}")
+    tables.importa_tabella(AGENTE, "uffici.csv", "\n".join(righe).encode())
+
+    assert tables.schema_testo(AGENTE) == (
+        "uffici(codice TEXT, ufficio TEXT, nota TEXT)\n"
+        # In ordine alfabetico e come letterali SQL, apostrofo raddoppiato compreso.
+        "  valori di ufficio: 'Roma', 'Sede dell''Aquila'"
     )
 
 

@@ -267,11 +267,15 @@ I test usano un modello finto. La griglia del criterio 5 invece gira con il mode
 | Giro | Valtesa | Valdoria |
 |---|---|---|
 | Primo, due lanci per domanda | 18/18 | 17/18: la domanda 7 una volta comincia con «Sì» e poi dice che il prestito non si rinnova |
-| Dopo la cura, tre lanci per domanda | — (istruzioni invariate) | 27/27 |
+| Dopo la cura 1, tre lanci per domanda | — (istruzioni invariate) | 27/27 |
+| Dopo la cura 2, tre lanci per domanda | 27/27 | 27/27 |
 
-La cura è una riga nelle istruzioni di Valdoria (a una domanda sì/no si risponde prima «Sì» o
-«No», coerente con il resto). Risultati lancio per lancio, come si lancia la griglia e come si
-prova una cura: [`docs/griglia/README.md`](docs/griglia/README.md).
+La cura 1 è una riga nelle istruzioni di Valdoria (a una domanda sì/no si risponde prima «Sì» o
+«No», coerente con il resto). La cura 2 è nel backend: lo schema di `query_db` elenca i valori
+delle colonne di testo con pochi valori (`stato: 'approvata', 'in attesa', 'respinta'`), perché il
+modello li indovinava e in chat ha risposto «0 note spese in attesa». Risultati lancio per
+lancio, come si lancia la griglia e come si prova una cura:
+[`docs/griglia/README.md`](docs/griglia/README.md).
 
 ## Struttura
 

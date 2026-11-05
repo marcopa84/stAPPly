@@ -67,6 +67,9 @@ def test_descrizione_di_query_db_con_lo_schema_reale(valtesa):
         "importo REAL, stato TEXT)"
     ) in query_db.description
     assert "50 righe" in query_db.description  # QUERY_DB_LIMIT
+    # I valori veri, e come trovarli per le colonne senza elenco: il modello non li indovina.
+    assert "valori di stato: 'approvata', 'in attesa', 'respinta'" in query_db.description
+    assert "SELECT DISTINCT" in query_db.description
 
 
 def test_istruzioni_di_laravel_poi_le_regole_fisse():

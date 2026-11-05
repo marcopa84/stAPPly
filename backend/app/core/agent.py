@@ -180,7 +180,10 @@ def _query_db(agent_id: str, schema: str) -> FunctionTool:
 
     descrizione = (
         "Esegue una query SQL di sola lettura (SELECT o WITH, dialetto SQLite) sulle tabelle "
-        f"dell'agente e restituisce al massimo {limite} righe. Tabelle e colonne:\n{schema}"
+        f"dell'agente e restituisce al massimo {limite} righe. Nei filtri sulle colonne di "
+        "testo usa i valori esattamente come sono scritti: quelli elencati qui sotto, oppure, "
+        "per le colonne senza elenco, quelli che restituisce una SELECT DISTINCT. "
+        f"Tabelle e colonne:\n{schema}"
     )
     return function_tool(query_db, description_override=descrizione, failure_error_function=None)
 

@@ -89,7 +89,11 @@ funziona e non rompe le altre domande, si riallinea Laravel con
 |---|---|---|
 | [`risultati-valtesa-20261031-145630.md`](risultati-valtesa-20261031-145630.md) | Valtesa, primo giro, 2 lanci | 18/18 |
 | [`risultati-valdoria-20261031-145819.md`](risultati-valdoria-20261031-145819.md) | Valdoria, primo giro, 2 lanci | 17/18 |
-| [`risultati-valdoria-20261031-150153.md`](risultati-valdoria-20261031-150153.md) | Valdoria dopo la cura, 3 lanci | 27/27 |
+| [`risultati-valdoria-20261031-150153.md`](risultati-valdoria-20261031-150153.md) | Valdoria dopo la cura 1, 3 lanci | 27/27 |
+| [`risultati-valtesa-20261105-195716.md`](risultati-valtesa-20261105-195716.md) | Valtesa dopo la cura 2, 3 lanci | 27/27 |
+| [`risultati-valdoria-20261105-195929.md`](risultati-valdoria-20261105-195929.md) | Valdoria dopo la cura 2, 3 lanci | 27/27 |
+
+### Cura 1: le risposte sì/no di Valdoria
 
 **Cosa succedeva.** Alla domanda 7 di Valdoria («Il prestito 620 si può rinnovare ancora?»), al
 secondo lancio, la risposta cominciava con «Sì.» e due righe dopo diceva che il prestito non è
@@ -104,7 +108,28 @@ rinnovabile: i dati erano giusti (2 rinnovi già fatti, massimo 2 per i libri), 
 due: 27/27, la domanda 7 comincia sempre con «No». Le istruzioni di Valtesa non sono cambiate,
 quindi la sua griglia non è stata rilanciata.
 
+### Cura 2: i valori delle colonne di testo nello schema di `query_db`
+
+**Cosa succedeva.** Provando l'app in Docker, alla domanda 5 di Valtesa («Quante note spese sono
+ancora in attesa di approvazione?») l'agente ha risposto «0»: ha filtrato
+`stato = 'in attesa di approvazione'`, mentre nella tabella il valore è `'in attesa'`. Nella
+griglia era passata perché il modello, dopo lo zero, aveva rifatto la query raggruppando per
+stato; in chat non lo ha fatto. Lo stesso indovinare si vedeva nella domanda 6 di Valdoria
+(`tessera LIKE '%student%'`): giusta per fortuna.
+
+**Cosa ho cambiato.** Una cosa sola, nel backend (`tables.schema_testo`): sotto ogni tabella, la
+descrizione di `query_db` elenca i valori delle colonne di testo che ne hanno al massimo 12, tutti
+brevi (`valori di stato: 'approvata', 'in attesa', 'respinta'`), e dice di usare i valori esatti,
+o di guardarli con una `SELECT DISTINCT` per le colonne senza elenco. Valgono per tutti gli agenti,
+anche per quelli degli utenti.
+
+**Le altre dopo la modifica.** Cambia il comportamento di tutti e due gli agenti, quindi rilanciate
+tutte e due le griglie con tre lanci: 27/27 e 27/27. La domanda 5 ora filtra `'in attesa'` al primo
+colpo, la 6 di Valdoria `tessera = 'studenti'`.
+
 **Rimaste, senza errori ma da sapere.**
+- A volte una risposta scrive tra `[ ]` qualcosa che non è un chunk: il nome di un file
+  (`[regolamento-sala-studio.md]`) o di un tool (`[query_db]`). L'interfaccia lo lascia come testo.
 - Nessuna risposta alla domanda 7 dice che il prestito è anche scaduto (18 ottobre 2026): l'agente
   non conosce la data di oggi. Una data nelle regole fisse del backend lo permetterebbe.
 - Un follow-up può citare un chunk restituito nel turno precedente: la citazione è giusta, ma
