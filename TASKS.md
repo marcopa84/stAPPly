@@ -1,6 +1,6 @@
 # stAPPly — dove siamo e cosa resta
 
-Aggiornato il 1-11-2026.
+Aggiornato il 5-11-2026.
 
 ## Fatto
 
@@ -18,7 +18,8 @@ Aggiornato il 1-11-2026.
   pulite; password, email, doppia autenticazione e passkey della demo sono bloccate.
 - **Revisione avversariale chiusa.** Cinque revisori (correttezza backend, sicurezza, correttezza
   frontend, requisiti, test) hanno trovato 46 problemi; 42 sono stati confermati da un verificatore
-  indipendente e sono tutti corretti nel codice, con un test ciascuno, **tranne `repo-01`** (sotto).
+  indipendente e sono tutti corretti nel codice, con un test ciascuno (`repo-01`, sulla storia git,
+  è stato chiuso il 5-11-2026: vedi sotto).
   Tra i più seri:
   - tetto ai chunk per documento prima degli embedding;
   - tetto alla dimensione dei risultati SQL e alle celle delle tabelle;
@@ -64,23 +65,37 @@ Aggiornato il 1-11-2026.
   avvio, login demo con sandbox, chat con traccia, tutto nel browser. CI `docker.yml` che
   costruisce le immagini.
 
+- **Chat come nelle app di chat (5-11-2026):** si scrive subito, la chat nasce con la prima
+  domanda, il titolo lo scrive il modello dopo la prima risposta (`POST /titles`), si rinomina dal
+  titolo, si riapre dallo storico. Provato nel browser in Docker.
+- **Cura 3 della griglia (5-11-2026):** la data di oggi nelle regole fisse. Valdoria 27/27, ora con
+  la scadenza del prestito 620; Valtesa 25/27 in due giri, con errori che cambiano da un giro
+  all'altro sulle domande instabili anche nel corso (vedi `docs/griglia/README.md`).
+- **Storia git riordinata (5-11-2026, force push confermato da Marco):**
+  - i dati finti del seed arrivano prima del codice che li usa nei test;
+  - configurazione, ingestione e tabelle in un commit (i test sono stati scritti insieme);
+  - il clone prima dell'API che lo importa;
+  - la griglia dopo il frontend, perché i suoi test leggono `DemoSeeder.php`;
+  - lo starter kit è quello esatto uscito da `laravel new` il 31-10 (commit `143e0c1` di
+    `laravel/livewire-starter-kit`);
+  - agenti, chat e sandbox demo in un commit, perché il codice dell'uno usa quello degli altri.
+
+  Ogni commit del repo si avvia e passa i suoi test (backend da 230 a 464 test, frontend da 34 a
+  303), e l'albero finale è identico a prima. Il contratto di `/clone` resta nel commit iniziale
+  del contratto: la storia è scritta «contratto prima», come si è lavorato davvero.
+- **Docker deciso:** Herd e uv per lo sviluppo, `compose.yaml` per far girare tutto.
+- **CLAUDE.md** resta nel repo.
+
 ## Da fare
 
-1. **Idea, da decidere:** dare all'agente la data di oggi nelle regole fisse del backend. Oggi
-   non sa che un prestito scaduto il 18 ottobre è scaduto (domanda 7 di Valdoria). È una modifica
-   al comportamento: dopo, vanno rilanciate tutte e due le griglie.
+1. **Cure possibili per Valtesa**, le stesse del docente, una alla volta e rilanciando tutto: la
+   riga sulle omonime nelle istruzioni (domanda 4, «36 giorni») e K 8 invece di 4 (domande 3 e 7).
 
 ## Decisioni aperte (di Marco)
 
-- **`repo-01`, storia git:** il commit «backend: agente con regole fisse, chat con sessione e API»
-  importa `app.core.clone`, che arriva solo nel commit dopo («backend: clone degli agenti per la
-  sandbox demo»). In più il contratto di `/clone` sta nel commit «Contratto API», separato da
-  backend e frontend, contro la regola di CLAUDE.md. Sistemarlo vuol dire riscrivere la storia
-  già su GitHub e fare un force push: lo si fa solo con la tua conferma.
-- **Email autore dei commit:** è quella di lavoro (`m.patti@futuretechlead.com`). Cambiarla sui
-  commit già pubblicati richiede un force push.
-- **CLAUDE.md pubblico su GitHub:** contiene percorsi locali e istruzioni per l'agente. Tenerlo o
-  toglierlo?
+- **Email autore dei commit:** è quella di lavoro (`m.patti@futuretechlead.com`). Non è stata
+  cambiata nella riscrittura del 5-11 perché non era stato chiesto: cambiarla ora richiede un altro
+  force push.
 
 ## Promemoria
 
