@@ -56,10 +56,18 @@ Aggiornato il 1-11-2026.
 - **CLAUDE.md** aggiornato con la sandbox demo.
 - **CI su GitHub** verde, backend e frontend, sugli ultimi push.
 
+- **Docker (5-11-2026):** `compose.yaml` con backend (uv), frontend (FrankenPHP) e scheduler,
+  con gli stessi `.env` dello sviluppo. Provato dal vivo su http://localhost:8080: seed demo al primo
+  avvio, login demo con sandbox, chat con traccia, tutto nel browser. CI `docker.yml` che
+  costruisce le immagini.
+
 ## Da fare
 
-1. **Prova della sandbox nel browser**, quando Chrome è collegato, facendo prima logout dal
-   template (la prova con curl è già passata).
+1. **`query_db` indovina i valori delle colonne di testo.** In Docker, «Quante note spese sono in
+   attesa?» ha risposto «0»: il modello ha filtrato `stato = 'in attesa di approvazione'`, mentre il
+   valore vero è `'in attesa'`, e non si è corretto (nella griglia, invece, sì). Proposta: nella
+   descrizione di `query_db` mettere, per le colonne di testo con pochi valori distinti, l'elenco
+   dei valori. Cambia il comportamento: dopo, vanno rilanciate le due griglie.
 2. **Idea, da decidere:** dare all'agente la data di oggi nelle regole fisse del backend. Oggi
    non sa che un prestito scaduto il 18 ottobre è scaduto (domanda 7 di Valdoria). È una modifica
    al comportamento: dopo, vanno rilanciate tutte e due le griglie.
@@ -71,8 +79,6 @@ Aggiornato il 1-11-2026.
   sandbox demo»). In più il contratto di `/clone` sta nel commit «Contratto API», separato da
   backend e frontend, contro la regola di CLAUDE.md. Sistemarlo vuol dire riscrivere la storia
   già su GitHub e fare un force push: lo si fa solo con la tua conferma.
-- **Docker:** il consiglio resta di non usarlo per lo sviluppo e di aggiungere più avanti un
-  `docker-compose.yml` opzionale, per chi valuta il progetto o per il deploy.
 - **Email autore dei commit:** è quella di lavoro (`m.patti@futuretechlead.com`). Cambiarla sui
   commit già pubblicati richiede un force push.
 - **CLAUDE.md pubblico su GitHub:** contiene percorsi locali e istruzioni per l'agente. Tenerlo o
